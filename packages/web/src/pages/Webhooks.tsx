@@ -1,4 +1,20 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import {
+  Title,
+  Text,
+  Paper,
+  Group,
+  Badge,
+  Button,
+  Stack,
+  TextInput,
+  Switch,
+  Modal,
+  Alert,
+} from "@mantine/core";
+import { useDisclosure } from "@mantine/hooks";
+import { notifications } from "@mantine/notifications";
+import { IconPlus, IconTrash, IconLink } from "@tabler/icons-react";
 
 interface WebhookItem {
   id: number;
@@ -13,10 +29,10 @@ interface WebhookItem {
 export default function Webhooks() {
   const [hooks, setHooks] = useState<WebhookItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showCreate, setShowCreate] = useState(false);
+  const [opened, { open, close }] = useDisclosure(false);
   const [newUrl, setNewUrl] = useState("");
   const [newEvents, setNewEvents] = useState("job.completed");
-  const [message, setMessage] = useState("");
+  const [secretInfo, setSecretInfo] = useState<string | null>(null);
 
   const token = () => localStorage.getItem("goozfire_token");
 
@@ -50,28 +66,26 @@ export default function Webhooks() {
       });
       const data = await res.json();
       if (data.success) {
-        setMessage(`Webhook created! Secret: ${data.webhook.secret}`);
+        setSecretInfo(`Webhook created! Secret: ${data.webhook.secret}`);
         setNewUrl("");
-        setShowCreate(false);
+        close();
+        notifications.show({ title: "Webhook Created", message: "Events will be sent to your URL", color: "green" });
         loadHooks();
       } else {
-        setMessage(`Error: ${data.error}`);
+        notifications.show({ title: "Error", message: data.error, color: "red" });
       }
     } catch (err: any) {
-      setMessage(`Error: ${err.message}`);
+      notifications.show({ title: "Error", message: err.message, color: "red" });
     }
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm("Delete this webhook?")) return;
     try {
-      await fetch(`/api/v1/webhooks/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token()}` },
-      });
+      await fetch(`/api/v1/webhooks/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token()}` } });
+      notifications.show({ title: "Deleted", message: "Webhook removed", color: "orange" });
       loadHooks();
     } catch (err: any) {
-      setMessage(`Error: ${err.message}`);
+      notifications.show({ title: "Error", message: err.message, color: "red" });
     }
   };
 
@@ -84,119 +98,89 @@ export default function Webhooks() {
       });
       loadHooks();
     } catch (err: any) {
-      setMessage(`Error: ${err.message}`);
+      notifications.show({ title: "Error", message: err.message, color: "red" });
     }
   };
 
   return (
-    <div style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
-        <h1 style={{ fontSize: "22px", fontWeight: 700, margin: 0, color: "#111" }}>Webhooks</h1>
-        <button onClick={() => setShowCreate(!showCreate)} style={{
-          padding: "10px 20px", background: "#4f46e5", color: "#fff",
-          border: "none", borderRadius: "8px", fontSize: "13px", fontWeight: 600, cursor: "pointer",
-        }}>+ Add Webhook</button>
-      </div>
-
-      {message && (
-        <div style={{
-          background: "#fefce8", border: "1px solid #eab308", borderRadius: "8px",
-          padding: "10px 14px", fontSize: "13px", marginBottom: "16px", color: "#92400e",
-        }}>
-          {message}
-          <button onClick={() => setMessage("")} style={{
-            float: "right", background: "none", border: "none", cursor: "pointer", color: "#92400e", fontWeight: 600,
-          }}>x</button>
+    <Stack gap="lg">
+      <Group justify="space-between">
+        <div>
+          <Title order={2}>Webhooks</Title>
+          <Text c="dimmed" size="sm">Receive event notifications via HTTP callbacks</Text>
         </div>
+        <Button leftSection={<IconPlus size={16} />} onClick={open}>
+          Add Webhook
+        </Button>
+      </Group>
+
+      {secretInfo && (
+        <Alert title="Webhook Created" color="yellow" withCloseButton onClose={() => setSecretInfo(null)}>
+          <Text size="sm">{secretInfo}</Text>
+        </Alert>
       )}
 
-      {showCreate && (
-        <div style={{
-          background: "#fff", borderRadius: "12px", padding: "20px 24px",
-          boxShadow: "0 1px 3px rgba(0,0,0,0.08)", marginBottom: "20px",
-        }}>
-          <div style={{ marginBottom: "12px" }}>
-            <label style={{ display: "block", fontSize: "13px", fontWeight: 600, color: "#374151", marginBottom: "4px" }}>Webhook URL</label>
-            <input type="url" value={newUrl} onChange={(e) => setNewUrl(e.target.value)}
-              placeholder="https://example.com/webhook" style={{
-                width: "100%", padding: "10px 14px", border: "1px solid #d1d5db",
-                borderRadius: "8px", fontSize: "14px", outline: "none", boxSizing: "border-box",
-              }} />
-          </div>
-          <div style={{ marginBottom: "12px" }}>
-            <label style={{ display: "block", fontSize: "13px", fontWeight: 600, color: "#374151", marginBottom: "4px" }}>Events (comma-separated)</label>
-            <input type="text" value={newEvents} onChange={(e) => setNewEvents(e.target.value)}
-              placeholder="job.completed, job.failed" style={{
-                width: "100%", padding: "10px 14px", border: "1px solid #d1d5db",
-                borderRadius: "8px", fontSize: "14px", outline: "none", boxSizing: "border-box",
-              }} />
-            <div style={{ fontSize: "11px", color: "#888", marginTop: "4px" }}>
-              Options: job.completed, job.failed, job.progress, crawl.completed
-            </div>
-          </div>
-          <div style={{ display: "flex", gap: "8px" }}>
-            <button onClick={handleCreate} style={{
-              padding: "10px 20px", background: "#059669", color: "#fff",
-              border: "none", borderRadius: "8px", fontSize: "13px", fontWeight: 600, cursor: "pointer",
-            }}>Create</button>
-            <button onClick={() => setShowCreate(false)} style={{
-              padding: "10px 20px", background: "#fff", color: "#374151",
-              border: "1px solid #d1d5db", borderRadius: "8px", fontSize: "13px", cursor: "pointer",
-            }}>Cancel</button>
-          </div>
-        </div>
-      )}
+      <Modal opened={opened} onClose={close} title="Add Webhook" centered>
+        <Stack gap="md">
+          <TextInput label="Webhook URL" value={newUrl} onChange={(e) => setNewUrl(e.target.value)} placeholder="https://example.com/webhook" required />
+          <TextInput label="Events (comma-separated)" value={newEvents} onChange={(e) => setNewEvents(e.target.value)} placeholder="job.completed, job.failed" />
+          <Text size="xs" c="dimmed">Options: job.completed, job.failed, job.progress, crawl.completed</Text>
+          <Group justify="flex-end">
+            <Button variant="default" onClick={close}>Cancel</Button>
+            <Button onClick={handleCreate}>Create</Button>
+          </Group>
+        </Stack>
+      </Modal>
 
       {loading ? (
-        <div style={{ padding: "20px", color: "#888" }}>Loading...</div>
+        <Text c="dimmed">Loading...</Text>
       ) : hooks.length === 0 ? (
-        <div style={{ background: "#fff", borderRadius: "12px", padding: "40px", textAlign: "center", boxShadow: "0 1px 3px rgba(0,0,0,0.08)" }}>
-          <div style={{ fontSize: "32px", marginBottom: "8px" }}>🔗</div>
-          <p style={{ color: "#888", margin: 0, fontSize: "14px" }}>No webhooks configured. Add one to receive event notifications.</p>
-        </div>
+        <Paper p="xl" ta="center" radius="md">
+          <IconLink size={40} stroke={1} style={{ opacity: 0.3 }} />
+          <Text c="dimmed" mt="sm">No webhooks configured.</Text>
+        </Paper>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+        <Stack gap="sm">
           {hooks.map((hook) => (
-            <div key={hook.id} style={{
-              background: "#fff", borderRadius: "10px", padding: "14px 18px",
-              boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
-            }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: "13px", fontWeight: 600, color: "#111", wordBreak: "break-all" }}>
-                    {hook.url}
-                  </div>
-                  <div style={{ fontSize: "11px", color: "#888", marginTop: "4px", display: "flex", gap: "8px", flexWrap: "wrap" }}>
+            <Paper key={hook.id} p="md" radius="md">
+              <Group justify="space-between" wrap="nowrap">
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <Text fw={500} size="sm" truncate>{hook.url}</Text>
+                  <Group gap="xs" mt={4}>
                     {hook.events.map((e) => (
-                      <span key={e} style={{
-                        background: "#f0f0f0", padding: "2px 8px", borderRadius: "4px", fontSize: "10px",
-                      }}>{e}</span>
+                      <Badge key={e} variant="light" size="sm" color="indigo">
+                        {e}
+                      </Badge>
                     ))}
-                    <span>· Created: {new Date(hook.created_at).toLocaleDateString()}</span>
+                    <Text size="xs" c="dimmed">· Created {new Date(hook.created_at).toLocaleDateString()}</Text>
                     {hook.last_triggered_at && (
-                      <span>· Last: {new Date(hook.last_triggered_at).toLocaleString()} ({hook.last_triggered_status})</span>
+                      <Text size="xs" c="dimmed">
+                        · Last: {new Date(hook.last_triggered_at).toLocaleString()} ({hook.last_triggered_status})
+                      </Text>
                     )}
-                  </div>
+                  </Group>
                 </div>
-                <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                  <button onClick={() => handleToggle(hook)} style={{
-                    padding: "5px 12px", borderRadius: "6px", fontSize: "11px", fontWeight: 600, cursor: "pointer",
-                    background: hook.is_active ? "#fefce8" : "#f0f0f0",
-                    color: hook.is_active ? "#92400e" : "#666",
-                    border: "none",
-                  }}>
-                    {hook.is_active ? "Active" : "Paused"}
-                  </button>
-                  <button onClick={() => handleDelete(hook.id)} style={{
-                    padding: "5px 12px", borderRadius: "6px", fontSize: "11px", cursor: "pointer",
-                    background: "#fef2f2", color: "#dc2626", border: "none",
-                  }}>Delete</button>
-                </div>
-              </div>
-            </div>
+                <Group gap="xs" wrap="nowrap">
+                  <Switch
+                    checked={hook.is_active}
+                    onChange={() => handleToggle(hook)}
+                    label={hook.is_active ? "Active" : "Paused"}
+                    size="sm"
+                  />
+                  <Button
+                    variant="light"
+                    color="red"
+                    size="compact-sm"
+                    onClick={() => handleDelete(hook.id)}
+                  >
+                    <IconTrash size={14} />
+                  </Button>
+                </Group>
+              </Group>
+            </Paper>
           ))}
-        </div>
+        </Stack>
       )}
-    </div>
+    </Stack>
   );
 }

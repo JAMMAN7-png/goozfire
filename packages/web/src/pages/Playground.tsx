@@ -1,31 +1,44 @@
-import React, { useState } from "react";
+import { useState } from "react";
+import {
+  Title,
+  Text,
+  Paper,
+  Stack,
+  TextInput,
+  Textarea,
+  NumberInput,
+  Button,
+  Tabs,
+  Code,
+  Group,
+  Badge,
+} from "@mantine/core";
+import { IconSearch, IconFileText, IconWorld, IconPuzzle, IconMap } from "@tabler/icons-react";
 import { tools } from "../api/client";
 
 type ToolName = "search" | "scrape" | "crawl" | "extract" | "map";
 
-const toolNames: ToolName[] = ["search", "scrape", "crawl", "extract", "map"];
-
-interface TabDef {
+interface TabConfig {
   name: ToolName;
   label: string;
-  icon: string;
+  icon: React.ElementType;
 }
 
-const tabs: TabDef[] = [
-  { name: "search", label: "Search", icon: "🔍" },
-  { name: "scrape", label: "Scrape", icon: "📄" },
-  { name: "crawl", label: "Crawl", icon: "🕸️" },
-  { name: "extract", label: "Extract", icon: "🧩" },
-  { name: "map", label: "Map", icon: "🗺️" },
+const tabs: TabConfig[] = [
+  { name: "search", label: "Search", icon: IconSearch },
+  { name: "scrape", label: "Scrape", icon: IconFileText },
+  { name: "crawl", label: "Crawl", icon: IconWorld },
+  { name: "extract", label: "Extract", icon: IconPuzzle },
+  { name: "map", label: "Map", icon: IconMap },
 ];
 
 export default function Playground() {
-  const [activeTab, setActiveTab] = useState<ToolName>("search");
+  const [activeTab, setActiveTab] = useState<string>("search");
   const [loading, setLoading] = useState(false);
   const [response, setResponse] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Form state per tool
+  // Form state
   const [searchQuery, setSearchQuery] = useState("");
   const [searchLimit, setSearchLimit] = useState(5);
   const [scrapeUrl, setScrapeUrl] = useState("");
@@ -42,8 +55,9 @@ export default function Playground() {
 
     try {
       let result: any;
+      const tab = activeTab as ToolName;
 
-      switch (activeTab) {
+      switch (tab) {
         case "search":
           if (!searchQuery.trim()) throw new Error("Query is required");
           result = await tools.search(searchQuery, searchLimit);
@@ -80,188 +94,81 @@ export default function Playground() {
       case "search":
         return (
           <>
-            <div style={{ marginBottom: "12px" }}>
-              <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#374151", marginBottom: "4px" }}>Query</label>
-              <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Natural language search query..." style={inputStyle} />
-            </div>
-            <div style={{ marginBottom: "12px" }}>
-              <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#374151", marginBottom: "4px" }}>Limit</label>
-              <input type="number" value={searchLimit} onChange={(e) => setSearchLimit(Number(e.target.value))} min={1} max={20} style={{ ...inputStyle, width: "100px" }} />
-            </div>
+            <TextInput label="Query" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Natural language search query..." required />
+            <NumberInput label="Limit" value={searchLimit} onChange={(v) => setSearchLimit(Number(v) || 5)} min={1} max={20} w={120} />
           </>
         );
       case "scrape":
-        return (
-          <div style={{ marginBottom: "12px" }}>
-            <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#374151", marginBottom: "4px" }}>URL</label>
-            <input type="url" value={scrapeUrl} onChange={(e) => setScrapeUrl(e.target.value)} placeholder="https://example.com" style={inputStyle} />
-          </div>
-        );
+        return <TextInput label="URL" value={scrapeUrl} onChange={(e) => setScrapeUrl(e.target.value)} placeholder="https://example.com" required />;
       case "crawl":
         return (
           <>
-            <div style={{ marginBottom: "12px" }}>
-              <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#374151", marginBottom: "4px" }}>Starting URL</label>
-              <input type="url" value={crawlUrl} onChange={(e) => setCrawlUrl(e.target.value)} placeholder="https://example.com" style={inputStyle} />
-            </div>
-            <div style={{ marginBottom: "12px" }}>
-              <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#374151", marginBottom: "4px" }}>Max Pages</label>
-              <input type="number" value={crawlPages} onChange={(e) => setCrawlPages(Number(e.target.value))} min={1} max={100} style={{ ...inputStyle, width: "100px" }} />
-            </div>
+            <TextInput label="Starting URL" value={crawlUrl} onChange={(e) => setCrawlUrl(e.target.value)} placeholder="https://example.com" required />
+            <NumberInput label="Max Pages" value={crawlPages} onChange={(v) => setCrawlPages(Number(v) || 10)} min={1} max={100} w={120} />
           </>
         );
       case "extract":
         return (
           <>
-            <div style={{ marginBottom: "12px" }}>
-              <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#374151", marginBottom: "4px" }}>URLs (one per line)</label>
-              <textarea value={extractUrls} onChange={(e) => setExtractUrls(e.target.value)} placeholder="https://example.com/page1&#10;https://example.com/page2" rows={3} style={{ ...inputStyle, resize: "vertical", fontFamily: "monospace" }} />
-            </div>
-            <div style={{ marginBottom: "12px" }}>
-              <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#374151", marginBottom: "4px" }}>Extraction Prompt</label>
-              <textarea value={extractPrompt} onChange={(e) => setExtractPrompt(e.target.value)} placeholder="Describe what data to extract..." rows={2} style={{ ...inputStyle, resize: "vertical" }} />
-            </div>
+            <Textarea label="URLs (one per line)" value={extractUrls} onChange={(e) => setExtractUrls(e.target.value)} placeholder="https://example.com/page1" rows={3} required />
+            <Textarea label="Extraction Prompt" value={extractPrompt} onChange={(e) => setExtractPrompt(e.target.value)} placeholder="Describe what data to extract..." rows={2} />
           </>
         );
       case "map":
-        return (
-          <div style={{ marginBottom: "12px" }}>
-            <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#374151", marginBottom: "4px" }}>URL</label>
-            <input type="url" value={mapUrl} onChange={(e) => setMapUrl(e.target.value)} placeholder="https://example.com" style={inputStyle} />
-          </div>
-        );
+        return <TextInput label="URL" value={mapUrl} onChange={(e) => setMapUrl(e.target.value)} placeholder="https://example.com" required />;
     }
   };
 
   return (
-    <div style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
-      <h1 style={{ fontSize: "22px", fontWeight: 700, margin: "0 0 4px", color: "#111" }}>Playground</h1>
-      <p style={{ fontSize: "14px", color: "#888", margin: "0 0 20px" }}>
-        Test the API endpoints interactively
-      </p>
+    <Stack gap="lg">
+      <div>
+        <Title order={2}>Playground</Title>
+        <Text c="dimmed" size="sm">Test the API endpoints interactively</Text>
+      </div>
 
-      {/* Tabs */}
-      <div style={{ display: "flex", gap: "4px", marginBottom: "20px" }}>
+      <Tabs value={activeTab} onChange={(v) => setActiveTab(v || "search")}>
+        <Tabs.List mb="md">
+          {tabs.map((tab) => (
+            <Tabs.Tab key={tab.name} value={tab.name} leftSection={<tab.icon size={16} />}>
+              {tab.label}
+            </Tabs.Tab>
+          ))}
+        </Tabs.List>
+
         {tabs.map((tab) => (
-          <button
-            key={tab.name}
-            onClick={() => {
-              setActiveTab(tab.name);
-              setResponse(null);
-              setError(null);
-            }}
-            style={{
-              padding: "8px 18px",
-              background: activeTab === tab.name ? "#4f46e5" : "#fff",
-              color: activeTab === tab.name ? "#fff" : "#374151",
-              border: activeTab === tab.name ? "none" : "1px solid #d1d5db",
-              borderRadius: "8px",
-              fontSize: "13px",
-              fontWeight: 600,
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-              transition: "all 0.15s",
-            }}
-          >
-            {tab.icon} {tab.label}
-          </button>
+          <Tabs.Panel key={tab.name} value={tab.name}>
+            <Paper p="md" radius="md" mb="md">
+              <Stack gap="md">
+                {tab.name === activeTab && renderForm()}
+                <Button onClick={execute} loading={loading} loaderProps={{ type: "dots" }} leftSection={<tab.icon size={16} />}>
+                  Execute
+                </Button>
+              </Stack>
+            </Paper>
+          </Tabs.Panel>
         ))}
-      </div>
+      </Tabs>
 
-      <div
-        style={{
-          background: "#fff",
-          borderRadius: "12px",
-          padding: "20px 24px",
-          boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
-          marginBottom: "16px",
-        }}
-      >
-        {renderForm()}
-
-        <button
-          onClick={execute}
-          disabled={loading}
-          style={{
-            padding: "10px 24px",
-            background: loading ? "#9ca3af" : "#059669",
-            color: "#fff",
-            border: "none",
-            borderRadius: "8px",
-            fontSize: "13px",
-            fontWeight: 600,
-            cursor: loading ? "not-allowed" : "pointer",
-            marginTop: "8px",
-          }}
-        >
-          {loading ? "Executing..." : "▶ Execute"}
-        </button>
-      </div>
-
-      {/* Response */}
       {error && (
-        <div
-          style={{
-            background: "#fef2f2",
-            border: "1px solid #fecaca",
-            borderRadius: "12px",
-            padding: "16px 20px",
-            color: "#dc2626",
-            fontSize: "13px",
-            fontFamily: "monospace",
-            whiteSpace: "pre-wrap",
-          }}
-        >
-          ❌ {error}
-        </div>
+        <Paper p="md" radius="md" bg="red" c="white">
+          <Group gap="xs">
+            <Badge color="red" variant="filled" size="sm">Error</Badge>
+            <Text size="sm">{error}</Text>
+          </Group>
+        </Paper>
       )}
 
       {response && (
-        <div
-          style={{
-            background: "#1a1a2e",
-            borderRadius: "12px",
-            padding: "20px 24px",
-            overflow: "auto",
-            maxHeight: "500px",
-          }}
-        >
-          <div
-            style={{
-              fontSize: "12px",
-              color: "#6b7280",
-              marginBottom: "8px",
-              fontFamily: "monospace",
-            }}
-          >
-            Response (JSON):
-          </div>
-          <pre
-            style={{
-              margin: 0,
-              fontSize: "12px",
-              color: "#e0e0e0",
-              fontFamily: "monospace",
-              whiteSpace: "pre-wrap",
-              lineHeight: 1.5,
-            }}
-          >
+        <Paper p="md" radius="md" bg="dark">
+          <Group gap="xs" mb="sm">
+            <Badge color="green" variant="filled" size="sm">Response</Badge>
+            <Text size="xs" c="dimmed">JSON</Text>
+          </Group>
+          <Code block style={{ background: "transparent", color: "#e0e0e0" }}>
             {response}
-          </pre>
-        </div>
+          </Code>
+        </Paper>
       )}
-    </div>
+    </Stack>
   );
 }
-
-const inputStyle: React.CSSProperties = {
-  width: "100%",
-  padding: "10px 14px",
-  border: "1px solid #d1d5db",
-  borderRadius: "8px",
-  fontSize: "14px",
-  outline: "none",
-  boxSizing: "border-box",
-};

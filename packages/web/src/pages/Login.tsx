@@ -1,6 +1,20 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { auth, setToken, setApiKey } from "../api/client";
+import {
+  Card,
+  TextInput,
+  PasswordInput,
+  Button,
+  Text,
+  Title,
+  Stack,
+  Center,
+  Box,
+  Alert,
+  Anchor,
+} from "@mantine/core";
+import { IconBrandFirebase, IconAlertCircle } from "@tabler/icons-react";
+import { auth, setToken } from "../api/client";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -25,161 +39,57 @@ export default function Login() {
   };
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)",
-        fontFamily:
-          '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-      }}
-    >
-      <div
-        style={{
-          background: "#fff",
-          borderRadius: "16px",
-          padding: "40px",
-          width: "380px",
-          boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
-        }}
-      >
-        <div
-          style={{
-            textAlign: "center",
-            marginBottom: "32px",
-          }}
-        >
-          <div style={{ fontSize: "40px", marginBottom: "8px" }}>🔥</div>
-          <h1
-            style={{
-              margin: 0,
-              fontSize: "24px",
-              fontWeight: 700,
-              color: "#1a1a2e",
-            }}
-          >
-            Goozfire
-          </h1>
-          <p style={{ margin: "4px 0 0", color: "#888", fontSize: "14px" }}>
-            Search API & MCP Gateway
-          </p>
-        </div>
-
-        {error && (
-          <div
-            style={{
-              background: "#fef2f2",
-              color: "#dc2626",
-              padding: "10px 14px",
-              borderRadius: "8px",
-              fontSize: "13px",
-              marginBottom: "16px",
-            }}
-          >
-            {error}
-          </div>
-        )}
-
+    <Center mih="100vh" style={{ background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)" }}>
+      <Card w={400} p="xl" radius="lg" withBorder>
         <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: "16px" }}>
-            <label
-              style={{
-                display: "block",
-                fontSize: "13px",
-                fontWeight: 600,
-                color: "#374151",
-                marginBottom: "6px",
-              }}
-            >
-              Email
-            </label>
-            <input
-              type="email"
+          <Stack gap="md">
+            <Center>
+              <Box>
+                <Title order={2} ta="center">
+                  🔥 Goozfire
+                </Title>
+                <Text c="dimmed" size="sm" ta="center">
+                  Search API & MCP Gateway
+                </Text>
+              </Box>
+            </Center>
+
+            {error && (
+              <Alert icon={<IconAlertCircle size={16} />} color="red" variant="light">
+                {error}
+              </Alert>
+            )}
+
+            <TextInput
+              label="Email"
+              placeholder="you@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
               required
-              style={{
-                width: "100%",
-                padding: "10px 14px",
-                border: "1px solid #d1d5db",
-                borderRadius: "8px",
-                fontSize: "14px",
-                outline: "none",
-                boxSizing: "border-box",
-              }}
+              autoFocus
             />
-          </div>
 
-          <div style={{ marginBottom: "24px" }}>
-            <label
-              style={{
-                display: "block",
-                fontSize: "13px",
-                fontWeight: 600,
-                color: "#374151",
-                marginBottom: "6px",
-              }}
-            >
-              Password
-            </label>
-            <input
-              type="password"
+            <PasswordInput
+              label="Password"
+              placeholder="Your password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
               required
-              style={{
-                width: "100%",
-                padding: "10px 14px",
-                border: "1px solid #d1d5db",
-                borderRadius: "8px",
-                fontSize: "14px",
-                outline: "none",
-                boxSizing: "border-box",
-              }}
             />
-          </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            style={{
-              width: "100%",
-              padding: "11px",
-              background: "#4f46e5",
-              color: "#fff",
-              border: "none",
-              borderRadius: "8px",
-              fontSize: "14px",
-              fontWeight: 600,
-              cursor: loading ? "not-allowed" : "pointer",
-              opacity: loading ? 0.7 : 1,
-            }}
-          >
-            {loading ? "Signing in..." : "Sign in"}
-          </button>
+            <Button type="submit" fullWidth loading={loading} loaderProps={{ type: "dots" }}>
+              Sign in
+            </Button>
+
+            <Text ta="center" size="sm" c="dimmed">
+              Don't have an account?{" "}
+              <Anchor component={Link} to="/register" fw={600}>
+                Register
+              </Anchor>
+            </Text>
+          </Stack>
         </form>
-
-        <p
-          style={{
-            textAlign: "center",
-            marginTop: "24px",
-            fontSize: "13px",
-            color: "#888",
-          }}
-        >
-          Don't have an account?{" "}
-          <Link
-            to="/register"
-            style={{ color: "#4f46e5", textDecoration: "none", fontWeight: 600 }}
-          >
-            Register
-          </Link>
-        </p>
-      </div>
-    </div>
+      </Card>
+    </Center>
   );
 }

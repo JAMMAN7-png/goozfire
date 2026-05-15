@@ -1,4 +1,3 @@
-import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Layout from "./components/Layout";
@@ -9,62 +8,21 @@ import ApiKeys from "./pages/ApiKeys";
 import Playground from "./pages/Playground";
 import Jobs from "./pages/Jobs";
 import Webhooks from "./pages/Webhooks";
+import Chat from "./pages/Chat";
+import Fusion from "./pages/Fusion";
 
 export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
-      <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <Layout>
-              <Dashboard />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/api-keys"
-        element={
-          <ProtectedRoute>
-            <Layout>
-              <ApiKeys />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/playground"
-        element={
-          <ProtectedRoute>
-            <Layout>
-              <Playground />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/jobs"
-        element={
-          <ProtectedRoute>
-            <Layout>
-              <Jobs />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/webhooks"
-        element={
-          <ProtectedRoute>
-            <Layout>
-              <Webhooks />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
+      <Route path="/dashboard" element={<ProtectedRoute><Layout><Dashboard /></Layout></ProtectedRoute>} />
+      <Route path="/api-keys" element={<ProtectedRoute><Layout><ApiKeys /></Layout></ProtectedRoute>} />
+      <Route path="/playground" element={<ProtectedRoute><Layout><Playground /></Layout></ProtectedRoute>} />
+      <Route path="/jobs" element={<ProtectedRoute><Layout><Jobs /></Layout></ProtectedRoute>} />
+      <Route path="/webhooks" element={<ProtectedRoute><Layout><Webhooks /></Layout></ProtectedRoute>} />
+      <Route path="/chat" element={<ProtectedRoute><Layout><Chat /></Layout></ProtectedRoute>} />
+      <Route path="/fusion" element={<ProtectedRoute><Layout><Fusion /></Layout></ProtectedRoute>} />
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>

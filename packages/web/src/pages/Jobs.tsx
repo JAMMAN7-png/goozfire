@@ -1,4 +1,16 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import {
+  Title,
+  Text,
+  Paper,
+  Group,
+  Badge,
+  Table,
+  Stack,
+  Select,
+  Skeleton,
+} from "@mantine/core";
+import { IconListDetails } from "@tabler/icons-react";
 
 interface Job {
   id: number;
@@ -12,10 +24,24 @@ interface Job {
   error: string | null;
 }
 
+const statusColor: Record<string, string> = {
+  completed: "green",
+  processing: "yellow",
+  failed: "red",
+  queued: "gray",
+};
+
+const typeIcon: Record<string, string> = {
+  research: "🔬",
+  batch: "📦",
+  crawl: "🕸️",
+  extract: "🧩",
+};
+
 export default function Jobs() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState("");
+  const [filter, setFilter] = useState<string | null>("");
 
   const loadJobs = async (statusFilter = "") => {
     setLoading(true);
@@ -35,105 +61,97 @@ export default function Jobs() {
   };
 
   useEffect(() => {
-    loadJobs(filter);
-    const interval = setInterval(() => loadJobs(filter), 5000);
+    loadJobs(filter || "");
+    const interval = setInterval(() => loadJobs(filter || ""), 5000);
     return () => clearInterval(interval);
   }, [filter]);
 
-  const statusColor = (status: string) => {
-    switch (status) {
-      case "completed": return "#059669";
-      case "processing": return "#d97706";
-      case "failed": return "#dc2626";
-      case "queued": return "#6b7280";
-      default: return "#6b7280";
-    }
-  };
-
-  const typeIcon = (type: string) => {
-    switch (type) {
-      case "research": return "🔬";
-      case "batch": return "📦";
-      case "crawl": return "🕸️";
-      case "extract": return "🧩";
-      default: return "📋";
-    }
-  };
-
   return (
-    <div style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
-        <h1 style={{ fontSize: "22px", fontWeight: 700, margin: 0, color: "#111" }}>Jobs</h1>
-        <select
+    <Stack gap="lg">
+      <Group justify="space-between">
+        <div>
+          <Title order={2}>Jobs</Title>
+          <Text c="dimmed" size="sm">Track and manage async jobs</Text>
+        </div>
+        <Select
+          placeholder="Filter by status"
+          data={[
+            { value: "", label: "All Status" },
+            { value: "queued", label: "Queued" },
+            { value: "processing", label: "Processing" },
+            { value: "completed", label: "Completed" },
+            { value: "failed", label: "Failed" },
+          ]}
           value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-          style={{
-            padding: "8px 14px",
-            border: "1px solid #d1d5db",
-            borderRadius: "8px",
-            fontSize: "13px",
-            background: "#fff",
-          }}
-        >
-          <option value="">All Status</option>
-          <option value="queued">Queued</option>
-          <option value="processing">Processing</option>
-          <option value="completed">Completed</option>
-          <option value="failed">Failed</option>
-        </select>
-      </div>
+          onChange={setFilter}
+          w={180}
+          clearable
+        />
+      </Group>
 
       {loading && jobs.length === 0 ? (
-        <div style={{ color: "#888", padding: "20px" }}>Loading...</div>
+        <Stack gap="xs">
+          {[1, 2, 3].map((i) => <Skeleton key={i} height={50} radius="md" />)}
+        </Stack>
       ) : jobs.length === 0 ? (
-        <div style={{ background: "#fff", borderRadius: "12px", padding: "40px", textAlign: "center", boxShadow: "0 1px 3px rgba(0,0,0,0.08)" }}>
-          <div style={{ fontSize: "32px", marginBottom: "8px" }}>📋</div>
-          <p style={{ color: "#888", margin: 0, fontSize: "14px" }}>No jobs yet. Run a research or batch task to see it here.</p>
-        </div>
+        <Paper p="xl" ta="center" radius="md">
+          <IconListDetails size={40} stroke={1} style={{ opacity: 0.3 }} />
+          <Text c="dimmed" mt="sm">No jobs yet.</Text>
+        </Paper>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-          {jobs.map((job) => (
-            <div key={job.id} style={{
-              background: "#fff",
-              borderRadius: "10px",
-              padding: "14px 18px",
-              boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
-              display: "flex",
-              alignItems: "center",
-              gap: "14px",
-            }}>
-              <div style={{ fontSize: "20px" }}>{typeIcon(job.type)}</div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: "13px", fontWeight: 600, color: "#111" }}>
-                  {job.type.charAt(0).toUpperCase() + job.type.slice(1)} #{job.id}
-                </div>
-                <div style={{ fontSize: "11px", color: "#888", marginTop: "2px" }}>
-                  {new Date(job.created_at).toLocaleString()}
-                  {job.completed_at && ` · Completed: ${new Date(job.completed_at).toLocaleString()}`}
-                </div>
-              </div>
-              <div style={{
-                padding: "4px 10px",
-                borderRadius: "6px",
-                fontSize: "11px",
-                fontWeight: 600,
-                color: "#fff",
-                background: statusColor(job.status),
-              }}>
-                {job.status}
-              </div>
-              <div style={{ fontSize: "11px", color: "#888" }}>
-                {job.progress}%
-              </div>
-              {job.error && (
-                <div style={{ fontSize: "10px", color: "#dc2626", maxWidth: "200px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {job.error}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
+        <Paper radius="md" withBorder>
+          <Table>
+            <Table.Thead>
+              <Table.Tr>
+                <Table.Th>Type</Table.Th>
+                <Table.Th>ID</Table.Th>
+                <Table.Th>Status</Table.Th>
+                <Table.Th>Progress</Table.Th>
+                <Table.Th>Credits</Table.Th>
+                <Table.Th>Created</Table.Th>
+                <Table.Th>Error</Table.Th>
+              </Table.Tr>
+            </Table.Thead>
+            <Table.Tbody>
+              {jobs.map((job) => (
+                <Table.Tr key={job.id}>
+                  <Table.Td>
+                    <Group gap="xs">
+                      <Text>{typeIcon[job.type] || "📋"}</Text>
+                      <Badge variant="light" size="sm">{job.type}</Badge>
+                    </Group>
+                  </Table.Td>
+                  <Table.Td fw={500}>#{job.id}</Table.Td>
+                  <Table.Td>
+                    <Badge color={statusColor[job.status] || "gray"} variant="light" size="sm">
+                      {job.status}
+                    </Badge>
+                  </Table.Td>
+                  <Table.Td>{job.progress}%</Table.Td>
+                  <Table.Td>{job.credits_used}</Table.Td>
+                  <Table.Td>
+                    <Text size="sm">{new Date(job.created_at).toLocaleString()}</Text>
+                    {job.completed_at && (
+                      <Text size="xs" c="dimmed">
+                        Done: {new Date(job.completed_at).toLocaleString()}
+                      </Text>
+                    )}
+                  </Table.Td>
+                  <Table.Td>
+                    {job.error ? (
+                      <Text size="xs" c="red" maw={150} truncate>
+                        {job.error}
+                      </Text>
+                    ) : (
+                      <Text c="dimmed" size="xs">—</Text>
+                    )}
+                  </Table.Td>
+                </Table.Tr>
+              ))}
+            </Table.Tbody>
+          </Table>
+        </Paper>
       )}
-    </div>
+    </Stack>
   );
 }

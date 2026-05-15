@@ -15,6 +15,7 @@ import { researchRoutes } from "./routes/research";
 import { batchRoutes } from "./routes/batch";
 import { jobsRoutes } from "./routes/jobs";
 import { webhooksRoutes } from "./routes/webhooks";
+import { chatRoutes } from "./routes/chat";
 import { rateLimit } from "./middleware/rate-limit";
 
 const app = new Hono();
@@ -60,6 +61,7 @@ app.route("/api/v1", researchRoutes);
 app.route("/api/v1", batchRoutes);
 app.route("/api/v1", jobsRoutes);
 app.route("/api/v1", webhooksRoutes);
+app.route("/api/v1", chatRoutes);
 
 if (WEB_DIST) {
   app.get("*", async (c) => {

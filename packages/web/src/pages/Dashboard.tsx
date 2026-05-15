@@ -1,5 +1,26 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import {
+  Title,
+  Text,
+  SimpleGrid,
+  Paper,
+  Group,
+  Stack,
+  RingProgress,
+  Center,
+  Table,
+  Button,
+  Badge,
+  Skeleton,
+} from "@mantine/core";
+import {
+  IconArrowUpRight,
+  IconFlame,
+  IconClock,
+  IconPlayerPlay,
+  IconKey,
+} from "@tabler/icons-react";
 import { auth, usage, logout } from "../api/client";
 
 interface Stats {
@@ -25,193 +46,184 @@ export default function Dashboard() {
         setUser(u);
         setStats(s);
       })
-      .catch(() => {
-        logout();
-      })
+      .catch(() => logout())
       .finally(() => setLoading(false));
   }, []);
 
-  const card = (title: string, value: string | number, color: string) => (
-    <div
-      style={{
-        background: "#fff",
-        borderRadius: "12px",
-        padding: "20px 24px",
-        boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
-        flex: 1,
-        minWidth: "180px",
-      }}
-    >
-      <div style={{ fontSize: "12px", color: "#888", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px" }}>
-        {title}
-      </div>
-      <div style={{ fontSize: "28px", fontWeight: 700, color, marginTop: "8px" }}>
+  const StatCard = ({
+    title,
+    value,
+    sub,
+    icon: Icon,
+    color,
+  }: {
+    title: string;
+    value: string;
+    sub?: string;
+    icon: React.ElementType;
+    color: string;
+  }) => (
+    <Paper p="md" radius="md">
+      <Group justify="space-between" mb="xs">
+        <Text size="xs" c="dimmed" tt="uppercase" fw={700}>
+          {title}
+        </Text>
+        <Icon size={20} stroke={1.5} color={`var(--mantine-color-${color}-5)`} />
+      </Group>
+      <Text size="xl" fw={700}>
         {value}
-      </div>
-    </div>
+      </Text>
+      {sub && (
+        <Text size="xs" c="dimmed" mt={2}>
+          {sub}
+        </Text>
+      )}
+    </Paper>
   );
 
-  if (loading) {
-    return (
-      <div style={{ display: "flex", justifyContent: "center", padding: "60px", color: "#888" }}>
-        Loading...
-      </div>
-    );
-  }
-
   return (
-    <div style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
-      <h1 style={{ fontSize: "22px", fontWeight: 700, margin: "0 0 4px", color: "#111" }}>
-        Welcome{user ? `, ${user.name}` : ""}
-      </h1>
-      <p style={{ fontSize: "14px", color: "#888", margin: "0 0 24px" }}>
-        Goozfire Search API & MCP Gateway
-      </p>
-
-      {/* Stats cards */}
-      <div style={{ display: "flex", gap: "16px", marginBottom: "28px", flexWrap: "wrap" }}>
-        {stats
-          ? <>
-              {card("Total Requests", stats.total_requests.toLocaleString(), "#4f46e5")}
-              {card("Credits Used", stats.total_credits.toLocaleString(), "#059669")}
-              {card("Avg Response", `${stats.avg_response_time_ms}ms`, "#d97706")}
-            </>
-          : <>
-              {card("Total Requests", 0, "#4f46e5")}
-              {card("Credits Used", 0, "#059669")}
-              {card("Avg Response", "0ms", "#d97706")}
-            </>
-        }
+    <Stack gap="lg">
+      <div>
+        <Title order={2}>
+          Welcome{user ? `, ${user.name}` : ""}
+        </Title>
+        <Text c="dimmed" size="sm">
+          Goozfire Search API & MCP Gateway
+        </Text>
       </div>
 
-      <div style={{ display: "flex", gap: "24px", flexWrap: "wrap" }}>
-        {/* Usage by Endpoint */}
-        <div
-          style={{
-            background: "#fff",
-            borderRadius: "12px",
-            padding: "20px 24px",
-            boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
-            flex: 1,
-            minWidth: "300px",
-          }}
-        >
-          <h3 style={{ margin: "0 0 16px", fontSize: "15px", color: "#111" }}>
-            Usage by Endpoint
-          </h3>
-          {stats && stats.by_endpoint.length > 0 ? (
-            <table style={{ width: "100%", fontSize: "13px", borderCollapse: "collapse" }}>
-              <thead>
-                <tr style={{ borderBottom: "2px solid #f0f0f0" }}>
-                  <th style={{ textAlign: "left", padding: "6px 8px", color: "#888", fontWeight: 600 }}>Endpoint</th>
-                  <th style={{ textAlign: "right", padding: "6px 8px", color: "#888", fontWeight: 600 }}>Requests</th>
-                  <th style={{ textAlign: "right", padding: "6px 8px", color: "#888", fontWeight: 600 }}>Credits</th>
-                </tr>
-              </thead>
-              <tbody>
-                {stats.by_endpoint.map((e) => (
-                  <tr key={e.endpoint} style={{ borderBottom: "1px solid #f5f5f5" }}>
-                    <td style={{ padding: "8px", fontWeight: 500 }}>{e.endpoint}</td>
-                    <td style={{ padding: "8px", textAlign: "right" }}>{e.count}</td>
-                    <td style={{ padding: "8px", textAlign: "right" }}>{e.credits}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : (
-            <p style={{ color: "#a0a0a0", fontSize: "13px", margin: 0 }}>
-              No usage data yet. Try the Playground to make your first request.
-            </p>
-          )}
-        </div>
+      {loading ? (
+        <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }}>
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} height={100} radius="md" />
+          ))}
+        </SimpleGrid>
+      ) : (
+        <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }}>
+          <StatCard
+            title="Total Requests"
+            value={(stats?.total_requests ?? 0).toLocaleString()}
+            icon={IconArrowUpRight}
+            color="indigo"
+          />
+          <StatCard
+            title="Credits Used"
+            value={(stats?.total_credits ?? 0).toLocaleString()}
+            icon={IconFlame}
+            color="orange"
+          />
+          <StatCard
+            title="Avg Response"
+            value={`${stats?.avg_response_time_ms ?? 0}ms`}
+            icon={IconClock}
+            color="teal"
+          />
+        </SimpleGrid>
+      )}
 
-        {/* Usage by Day */}
-        <div
-          style={{
-            background: "#fff",
-            borderRadius: "12px",
-            padding: "20px 24px",
-            boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
-            flex: 1,
-            minWidth: "300px",
-          }}
-        >
-          <h3 style={{ margin: "0 0 16px", fontSize: "15px", color: "#111" }}>
-            Usage (Last 7 Days)
-          </h3>
-          {stats && stats.by_day.length > 0 ? (
-            <div style={{ display: "flex", gap: "4px", alignItems: "flex-end", height: "120px" }}>
-              {stats.by_day.map((d) => {
-                const maxCount = Math.max(...stats.by_day.map((x) => x.count));
-                const height = maxCount > 0 ? (d.count / maxCount) * 100 : 0;
-                return (
-                  <div
-                    key={d.date}
-                    style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: "4px" }}
-                  >
-                    <div
-                      style={{
-                        width: "100%",
-                        background: "#4f46e5",
-                        borderRadius: "4px 4px 0 0",
-                        height: `${Math.max(height, 4)}%`,
-                        opacity: 0.8,
-                        transition: "height 0.3s",
-                        minHeight: "4px",
-                      }}
-                      title={`${d.date}: ${d.count} requests`}
-                    />
-                    <span style={{ fontSize: "9px", color: "#888", writingMode: "vertical-lr", textOrientation: "mixed" }}>
-                      {d.date.slice(5)}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <p style={{ color: "#a0a0a0", fontSize: "13px", margin: 0 }}>
-              No daily data yet.
-            </p>
-          )}
-        </div>
-      </div>
+      {!loading && (
+        <SimpleGrid cols={{ base: 1, lg: 2 }}>
+          <Paper p="md" radius="md">
+            <Text fw={600} size="sm" mb="md">
+              Usage by Endpoint
+            </Text>
+            {stats && stats.by_endpoint.length > 0 ? (
+              <Table>
+                <Table.Thead>
+                  <Table.Tr>
+                    <Table.Th>Endpoint</Table.Th>
+                    <Table.Th ta="right">Requests</Table.Th>
+                    <Table.Th ta="right">Credits</Table.Th>
+                  </Table.Tr>
+                </Table.Thead>
+                <Table.Tbody>
+                  {stats.by_endpoint.map((e) => (
+                    <Table.Tr key={e.endpoint}>
+                      <Table.Td>
+                        <Badge variant="light" size="sm">
+                          {e.endpoint}
+                        </Badge>
+                      </Table.Td>
+                      <Table.Td ta="right">{e.count}</Table.Td>
+                      <Table.Td ta="right">{e.credits}</Table.Td>
+                    </Table.Tr>
+                  ))}
+                </Table.Tbody>
+              </Table>
+            ) : (
+              <Text c="dimmed" size="sm">
+                No usage data yet.
+              </Text>
+            )}
+          </Paper>
 
-      {/* Quick actions */}
-      <div style={{ marginTop: "28px" }}>
-        <h3 style={{ fontSize: "15px", color: "#111", margin: "0 0 12px" }}>Quick Actions</h3>
-        <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
-          <button
+          <Paper p="md" radius="md">
+            <Text fw={600} size="sm" mb="md">
+              Usage (Last 7 Days)
+            </Text>
+            {stats && stats.by_day.length > 0 ? (
+              <Group gap="xs" align="flex-end" h={140}>
+                {stats.by_day.map((d) => {
+                  const maxCount = Math.max(...stats.by_day.map((x) => x.count));
+                  const pct = maxCount > 0 ? (d.count / maxCount) * 100 : 0;
+                  return (
+                    <Stack key={d.date} align="center" gap={4} style={{ flex: 1 }}>
+                      <div
+                        style={{
+                          width: "100%",
+                          height: `${Math.max(pct, 4)}%`,
+                          minHeight: 4,
+                          borderRadius: 4,
+                          background: `linear-gradient(to top, var(--mantine-color-indigo-6), var(--mantine-color-indigo-4))`,
+                          transition: "height 0.3s ease",
+                        }}
+                      />
+                      <Text size="xs" c="dimmed">
+                        {d.date.slice(5)}
+                      </Text>
+                    </Stack>
+                  );
+                })}
+              </Group>
+            ) : (
+              <Text c="dimmed" size="sm">
+                No daily data yet.
+              </Text>
+            )}
+          </Paper>
+        </SimpleGrid>
+      )}
+
+      <Paper p="md" radius="md">
+        <Text fw={600} size="sm" mb="md">
+          Quick Actions
+        </Text>
+        <Group>
+          <Button
+            leftSection={<IconKey size={16} />}
+            variant="light"
             onClick={() => navigate("/api-keys")}
-            style={{
-              padding: "10px 20px",
-              background: "#4f46e5",
-              color: "#fff",
-              border: "none",
-              borderRadius: "8px",
-              fontSize: "13px",
-              fontWeight: 600,
-              cursor: "pointer",
-            }}
           >
             Create API Key
-          </button>
-          <button
+          </Button>
+          <Button
+            leftSection={<IconPlayerPlay size={16} />}
+            variant="light"
+            color="teal"
             onClick={() => navigate("/playground")}
-            style={{
-              padding: "10px 20px",
-              background: "#fff",
-              color: "#374151",
-              border: "1px solid #d1d5db",
-              borderRadius: "8px",
-              fontSize: "13px",
-              fontWeight: 600,
-              cursor: "pointer",
-            }}
           >
             Try Playground
-          </button>
-        </div>
-      </div>
-    </div>
+          </Button>
+          <Button
+            leftSection={<IconArrowUpRight size={16} />}
+            variant="light"
+            color="cyan"
+            onClick={() => navigate("/chat")}
+          >
+            Chat with AI
+          </Button>
+        </Group>
+      </Paper>
+    </Stack>
   );
 }
