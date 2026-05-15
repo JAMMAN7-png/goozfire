@@ -97,6 +97,11 @@ chatRoutes.post("/chat/completions", apiKeyAuth, async (c) => {
       body: JSON.stringify({ model, messages, ...rest }),
     });
 
+    if (!orRes.ok) {
+      const errBody = await orRes.text();
+      return c.json({ error: `OpenRouter error: ${orRes.status} ${errBody.substring(0, 500)}` }, orRes.status as 400 | 401 | 402 | 403 | 404 | 409 | 429 | 500 | 502 | 503);
+    }
+
     const data = await orRes.json();
 
     await trackUsage(user.userId, apiKeyId, "/chat/completions", "POST", orRes.status, 1, 0);
@@ -141,6 +146,10 @@ chatRoutes.post("/chat/fusion", apiKeyAuth, async (c) => {
           }),
         });
 
+        if (!orRes.ok) {
+          const errBody = await orRes.text();
+          throw new Error(`OpenRouter error ${orRes.status}: ${errBody}`);
+        }
         const data = await orRes.json();
         return { model, data, status: orRes.status };
       })
@@ -156,5 +165,37 @@ chatRoutes.post("/chat/fusion", apiKeyAuth, async (c) => {
     return c.json({ results: fusionResults });
   } catch (error: any) {
     return c.json({ error: error.message }, 500);
+  }
+});
+
+// POST /webhooks/openrouter - OpenRouter observability webhook receiver
+chatRoutes.post("/webhooks/openrouter", async (c) => {
+  try {
+    const body = await c.req.json();
+    console.log("OpenRouter webhook received:", JSON.stringify(body).substring(0, 500));
+    return c.json({
+      success: true,
+      message: "Webhook received",
+      event: body.type || body.event || "unknown",
+    });
+  } catch (error: any) {
+    console.error("OpenRouter webhook error:", error.message);
+    return c.json({ success: false, error: error.message }, 400);
+  }
+});
+
+// PUT /webhooks/openrouter - Same handler for PUT requests
+chatRoutes.put("/webhooks/openrouter", async (c) => {
+  try {
+    const body = await c.req.json();
+    console.log("OpenRouter webhook (PUT) received:", JSON.stringify(body).substring(0, 500));
+    return c.json({
+      success: true,
+      message: "Webhook received via PUT",
+      event: body.type || body.event || "unknown",
+    });
+  } catch (error: any) {
+    console.error("OpenRouter webhook error:", error.message);
+    return c.json({ success: false, error: error.message }, 400);
   }
 });

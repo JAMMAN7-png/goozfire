@@ -79,11 +79,19 @@ export default function Fusion() {
             { role: "system", content: systemPrompt },
             { role: "user", content: prompt.trim() },
           ],
-          max_tokens: 2048,
+          max_tokens: 1024,
         }),
       });
 
-      const data = await res.json();
+      let data: any;
+      try {
+        data = await res.json();
+      } catch {
+        const text = await res.text().catch(() => "");
+        setError(`API returned ${res.status}: ${text.substring(0, 300)}`);
+        return;
+      }
+
       if (data.error) {
         setError(data.error);
       } else if (data.results) {
@@ -94,16 +102,18 @@ export default function Fusion() {
           } else {
             const choice = r.data?.choices?.[0];
             newResponses[r.model] = {
-              content: choice?.message?.content || "No response",
+              content: choice?.message?.content || r.data?.error || "No response",
               time: r.data?.usage?.total_time || 0,
               tokens: r.data?.usage?.total_tokens || 0,
             };
           }
         }
         setResponses(newResponses);
+      } else {
+        setError("No results returned from Fusion API. The response format may have changed.");
       }
     } catch (err: any) {
-      setError(err.message);
+      setError(err?.message || "Network error. Check console for details.");
     } finally {
       setLoading(false);
     }

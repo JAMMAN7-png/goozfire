@@ -67,7 +67,7 @@ export default function Dashboard() {
                   <Icon size={20} />
                 </ThemeIcon>
               </Group>
-              <Text size="xxl" fw={700}>{value}</Text>
+              <Text size="xl" fw={700}>{value}</Text>
             </Paper>
           ))
         }

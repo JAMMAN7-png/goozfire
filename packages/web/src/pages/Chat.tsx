@@ -36,24 +36,44 @@ export default function Chat() {
 
   const sendMessage = async () => {
     if (!input.trim() || loading) return;
-    const userMsg: Message = { role: "user", content: input.trim() };
-    setMessages(prev => [...prev, userMsg]); setInput(""); setLoading(true);
-    const chatHistory = [...messages, userMsg].map(m => ({ role: m.role, content: m.content }));
-    for (const model of models) {
-      setStreaming(prev => ({ ...prev, [model]: true }));
-      setResponses(prev => ({ ...prev, [model]: "" }));
-      try {
-        const token = localStorage.getItem("goozfire_token");
-        const res = await fetch("/api/v1/chat/completions", {
-          method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ model, messages: chatHistory, stream: false }),
-        });
-        const data = await res.json();
-        setResponses(prev => ({ ...prev, [model]: data?.choices?.[0]?.message?.content || data?.error || "No response" }));
-      } catch (err: any) { setResponses(prev => ({ ...prev, [model]: `Error: ${err.message}` })); }
-      finally { setStreaming(prev => ({ ...prev, [model]: false })); }
+    const text = input.trim();
+    const userMsg: Message = { role: "user", content: text };
+    setMessages(prev => [...prev, userMsg]);
+    setInput("");
+    setLoading(true);
+
+    // Build chat history from current messages + new message
+    const history = [...messages, userMsg].map(m => ({ role: m.role, content: m.content }));
+
+    try {
+      const token = localStorage.getItem("goozfire_token");
+      for (const model of models) {
+        setStreaming(prev => ({ ...prev, [model]: true }));
+        setResponses(prev => ({ ...prev, [model]: "" }));
+        try {
+          const res = await fetch("/api/v1/chat/completions", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+            body: JSON.stringify({ model, messages: history, stream: false, max_tokens: 1024 }),
+          });
+          let content = "No response";
+          try {
+            const data = await res.json();
+            content = data?.choices?.[0]?.message?.content || data?.error || JSON.stringify(data);
+          } catch {
+            const text = await res.text().catch(() => "");
+            content = `API error (${res.status}): ${text.substring(0, 300)}`;
+          }
+          setResponses(prev => ({ ...prev, [model]: content }));
+        } catch (err: any) {
+          setResponses(prev => ({ ...prev, [model]: `Network error: ${err?.message || "Unknown error"}` }));
+        } finally {
+          setStreaming(prev => ({ ...prev, [model]: false }));
+        }
+      }
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const clearChat = () => {
@@ -94,7 +114,7 @@ export default function Chat() {
                     style={{ opacity: 0.8, color: msg.role === "user" ? "rgba(255,255,255,0.9)" : undefined }}>
                     {msg.role === "user" ? "You" : "Assistant"}
                   </Badge>
-                  <Text size="sm" style={{ whiteSpace: "pre-wrap" }}>{msg.content}</Text>
+                  <Text size="sm" style={{ whiteSpace: "pre-wrap" }}>{msg.content || ''}</Text>
                 </Paper>
                 {msg.role === "user" && <Avatar size="sm" radius="xl" color="indigo"><IconUser size={16} /></Avatar>}
               </Group>
@@ -108,7 +128,7 @@ export default function Chat() {
                   <Paper p="sm" radius="lg" style={{ maxWidth: "80%", background: "var(--mantine-color-dark-6)" }}>
                     <Group gap="xs" mb={4}>
                       <Badge size="sm" variant="gradient" gradient={{ from: "teal", to: "cyan" }}>
-                        {model.split("/").pop()}
+                        {model?.split?.("/")?.pop() || ''}
                       </Badge>
                       {isStreaming && <Loader size="xs" />}
                     </Group>
