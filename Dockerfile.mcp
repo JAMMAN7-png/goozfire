@@ -1,17 +1,22 @@
 FROM oven/bun:1.3 AS base
 WORKDIR /app
 
+# Install dependencies
 COPY package.json bun.lock ./
 COPY packages/shared/package.json packages/shared/
 COPY packages/mcp/package.json packages/mcp/
 RUN bun install --frozen-lockfile
 
+# Copy source and config
+COPY tsconfig.json ./
 COPY packages/shared ./packages/shared
 COPY packages/mcp ./packages/mcp
 
+# Build
 RUN bun run --cwd packages/shared build
 RUN bun run --cwd packages/mcp build
 
+# Production image
 FROM oven/bun:1.3 AS production
 WORKDIR /app
 
