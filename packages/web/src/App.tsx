@@ -7,6 +7,8 @@ import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import ApiKeys from "./pages/ApiKeys";
 import Playground from "./pages/Playground";
+import Jobs from "./pages/Jobs";
+import Webhooks from "./pages/Webhooks";
 
 export default function App() {
   return (
@@ -39,6 +41,26 @@ export default function App() {
           <ProtectedRoute>
             <Layout>
               <Playground />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/jobs"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <Jobs />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/webhooks"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <Webhooks />
             </Layout>
           </ProtectedRoute>
         }

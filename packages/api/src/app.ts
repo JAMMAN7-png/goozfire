@@ -11,10 +11,14 @@ import { crawlRoutes } from "./routes/crawl";
 import { extractRoutes } from "./routes/extract";
 import { mapRoutes } from "./routes/map";
 import { usageRoutes } from "./routes/usage";
+import { researchRoutes } from "./routes/research";
+import { batchRoutes } from "./routes/batch";
+import { jobsRoutes } from "./routes/jobs";
+import { webhooksRoutes } from "./routes/webhooks";
+import { rateLimit } from "./middleware/rate-limit";
 
 const app = new Hono();
 
-// Determine dashboard static directory
 const WEB_DIST = (() => {
   const paths = [
     join(import.meta.dir, "../../web/dist"),
@@ -28,37 +32,23 @@ const WEB_DIST = (() => {
 })();
 
 const MIME: Record<string, string> = {
-  html: "text/html",
-  js: "application/javascript",
-  css: "text/css",
-  svg: "image/svg+xml",
-  png: "image/png",
-  ico: "image/x-icon",
-  json: "application/json",
+  html: "text/html", js: "application/javascript", css: "text/css",
+  svg: "image/svg+xml", png: "image/png", ico: "image/x-icon", json: "application/json",
 };
 
-// Global middleware
-app.use(
-  "*",
-  cors({
-    origin: "*",
-    allowHeaders: ["Content-Type", "Authorization", "X-API-Key"],
-    exposeHeaders: ["Content-Type"],
-  })
-);
+app.use("*", cors({
+  origin: "*",
+  allowHeaders: ["Content-Type", "Authorization", "X-API-Key"],
+  exposeHeaders: ["Content-Type", "X-RateLimit-Limit", "X-RateLimit-Remaining", "X-RateLimit-Reset"],
+}));
 app.use("*", logger());
 app.use("*", secureHeaders());
+app.use("*", rateLimit);
 
-// Health check
 app.get("/api/v1/health", (c) =>
-  c.json({
-    status: "ok",
-    version: "0.1.0",
-    timestamp: new Date().toISOString(),
-  })
+  c.json({ status: "ok", version: "0.1.0", timestamp: new Date().toISOString() })
 );
 
-// Mount routes
 app.route("/api/v1/auth", authRoutes);
 app.route("/api/v1", searchRoutes);
 app.route("/api/v1", scrapeRoutes);
@@ -66,34 +56,22 @@ app.route("/api/v1", crawlRoutes);
 app.route("/api/v1", extractRoutes);
 app.route("/api/v1", mapRoutes);
 app.route("/api/v1", usageRoutes);
+app.route("/api/v1", researchRoutes);
+app.route("/api/v1", batchRoutes);
+app.route("/api/v1", jobsRoutes);
+app.route("/api/v1", webhooksRoutes);
 
-// Serve static dashboard files (SPA catch-all)
 if (WEB_DIST) {
   app.get("*", async (c) => {
     const reqPath = new URL(c.req.url).pathname;
-
-    // API routes get 404, not SPA
-    if (reqPath.startsWith("/api/")) {
-      return c.json({ error: "Not found" }, 404);
-    }
-
-    // Try exact file match
+    if (reqPath.startsWith("/api/")) return c.json({ error: "Not found" }, 404);
     const filePath = join(WEB_DIST, reqPath === "/" ? "index.html" : reqPath);
     if (existsSync(filePath)) {
       const ext = filePath.split(".").pop() || "";
-      return new Response(Bun.file(filePath), {
-        headers: { "Content-Type": MIME[ext] || "application/octet-stream" },
-      });
+      return new Response(Bun.file(filePath), { headers: { "Content-Type": MIME[ext] || "application/octet-stream" } });
     }
-
-    // SPA fallback: serve index.html for client-side routing
     const indexHtml = join(WEB_DIST, "index.html");
-    if (existsSync(indexHtml)) {
-      return new Response(Bun.file(indexHtml), {
-        headers: { "Content-Type": "text/html" },
-      });
-    }
-
+    if (existsSync(indexHtml)) return new Response(Bun.file(indexHtml), { headers: { "Content-Type": "text/html" } });
     return c.json({ error: "Not found" }, 404);
   });
 }

@@ -464,6 +464,54 @@ function defineTools(server: McpServer) {
   });
 
   server.register({
+    name: "goozfire_research",
+    description: "Run deep multi-step research on a topic. Searches the web, reads sources, and synthesizes findings into a structured report with citations. Like Parallel.ai Deep Research.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        question: { type: "string", description: "The research question" },
+        max_sources: { type: "number", description: "Max sources to analyze (default: 10)" },
+        depth: { type: "string", enum: ["basic", "deep", "comprehensive"], description: "Research depth" },
+      },
+      required: ["question"],
+    },
+    handler: async (args) => {
+      const res = await fetch("http://localhost:3003/api/v1/research", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer internal" },
+        body: JSON.stringify({
+          question: args.question,
+          max_sources: args.max_sources || 10,
+          depth: args.depth || "basic",
+        }),
+      });
+      const result = await res.json();
+      return [{ type: "text", text: JSON.stringify(result, null, 2) }];
+    },
+  });
+  server.register({
+    name: "goozfire_batch",
+    description: "Extract structured data from a list of URLs or items with a single prompt. Like Parallel.ai Task Group.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        items: { type: "array", items: {}, description: "List of items (URLs or objects)" },
+        prompt: { type: "string", description: "Extraction prompt" },
+        input_field: { type: "string", description: "Field containing URL" },
+      },
+      required: ["items", "prompt"],
+    },
+    handler: async (args) => {
+      const res = await fetch("http://localhost:3003/api/v1/batch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items: args.items, prompt: args.prompt, input_field: args.input_field }),
+      });
+      const result = await res.json();
+      return [{ type: "text", text: JSON.stringify(result, null, 2) }];
+    },
+  });
+  server.register({
     name: "goozfire_health",
     description: "Health check - verify the MCP server and Firecrawl connection are working.",
     inputSchema: {
@@ -524,7 +572,7 @@ console.error(`Goozfire MCP server running:`);
 console.error(`  HTTP API: http://localhost:${port}`);
 console.error(`  SSE:      http://localhost:${port}/sse`);
 console.error(`  Health:   http://localhost:${port}/v1/health`);
-console.error(`  Tools:    7 registered`);
+console.error(`  Tools:    9 registered`);
 
 // Types
 interface McpTool {

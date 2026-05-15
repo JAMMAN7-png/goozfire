@@ -95,6 +95,8 @@ const styles = {
 const navItems = [
   { to: "/dashboard", label: "Dashboard", icon: "◇" },
   { to: "/api-keys", label: "API Keys", icon: "⚷" },
+  { to: "/jobs", label: "Jobs", icon: "📋" },
+  { to: "/webhooks", label: "Webhooks", icon: "🔗" },
   { to: "/playground", label: "Playground", icon: "▶" },
 ];
 

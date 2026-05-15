@@ -59,7 +59,7 @@ export interface CreateApiKeyInput {
 export interface ApiKeyResponse {
   id: number;
   name: string;
-  key: string; // Only shown once on creation
+  key: string;
   key_prefix: string;
   created_at: string;
 }
@@ -232,4 +232,139 @@ export interface UsageStats {
 export interface RateLimitConfig {
   window_ms: number;
   max_requests: number;
+}
+
+// ============================================
+// Deep Research
+// ============================================
+
+export interface ResearchRequest {
+  question: string;
+  max_sources?: number;
+  depth?: "basic" | "deep" | "comprehensive";
+}
+
+export interface ResearchSource {
+  url: string;
+  title: string;
+  content: string;
+  relevance_score?: number;
+}
+
+export interface ResearchFinding {
+  finding: string;
+  evidence: string;
+  sources: string[];
+}
+
+export interface ResearchResponse {
+  success: boolean;
+  job_id: string;
+  status: "processing" | "completed" | "failed";
+  report?: {
+    summary: string;
+    key_findings: ResearchFinding[];
+    sources: ResearchSource[];
+    raw_synthesis?: string;
+    credits_used: number;
+  };
+  error?: string;
+}
+
+// ============================================
+// Batch Processing
+// ============================================
+
+export interface BatchRequest {
+  items: Array<Record<string, unknown>>;
+  prompt: string;
+  schema?: Record<string, unknown>;
+  input_field?: string;
+  output_fields?: string[];
+}
+
+export interface BatchItemResult {
+  index: number;
+  input: Record<string, unknown>;
+  output: Record<string, unknown> | null;
+  error?: string;
+}
+
+export interface BatchResponse {
+  success: boolean;
+  job_id: string;
+  status: "processing" | "completed" | "failed";
+  results?: BatchItemResult[];
+  error?: string;
+}
+
+// ============================================
+// Async Jobs
+// ============================================
+
+export type JobType = "research" | "batch" | "crawl" | "extract";
+export type JobStatus = "queued" | "processing" | "completed" | "failed";
+
+export interface Job {
+  id: number;
+  user_id: number;
+  type: JobType;
+  status: JobStatus;
+  input: string;
+  output: string | null;
+  error: string | null;
+  progress: number;
+  credits_used: number;
+  created_at: string;
+  started_at: string | null;
+  completed_at: string | null;
+}
+
+export interface JobListResponse {
+  jobs: Job[];
+  total: number;
+}
+
+export interface JobCreateRequest {
+  type: JobType;
+  input: Record<string, unknown>;
+}
+
+// ============================================
+// Webhooks
+// ============================================
+
+export interface Webhook {
+  id: number;
+  user_id: number;
+  url: string;
+  secret: string;
+  events: string;
+  is_active: number;
+  created_at: string;
+  last_triggered_at: string | null;
+  last_triggered_status: number | null;
+}
+
+export interface WebhookCreateRequest {
+  url: string;
+  events: string[];
+  secret?: string;
+}
+
+export interface WebhookUpdateRequest {
+  url?: string;
+  events?: string[];
+  is_active?: boolean;
+}
+
+export interface WebhookDelivery {
+  id: number;
+  webhook_id: number;
+  event: string;
+  payload: string;
+  status_code: number | null;
+  response: string | null;
+  success: number;
+  created_at: string;
 }
