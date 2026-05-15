@@ -67,15 +67,15 @@ export default function Playground() {
   const renderForm = () => {
     switch (activeTab) {
       case "search":
-        return <><TextInput label="Query" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Natural language search query..." required /><NumberInput label="Limit" value={searchLimit} onChange={v => setSearchLimit(Number(v)||5)} min={1} max={20} w={120} /></>;
+        return <><TextInput autoComplete="off" label="Query" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Natural language search query..." required /><NumberInput autoComplete="off" label="Limit" value={searchLimit} onChange={v => setSearchLimit(Number(v)||5)} min={1} max={20} w={120} /></>;
       case "scrape":
-        return <TextInput label="URL" value={scrapeUrl} onChange={e => setScrapeUrl(e.target.value)} placeholder="https://example.com" required />;
+        return <TextInput autoComplete="off" label="URL" value={scrapeUrl} onChange={e => setScrapeUrl(e.target.value)} placeholder="https://example.com" required />;
       case "crawl":
-        return <><TextInput label="Starting URL" value={crawlUrl} onChange={e => setCrawlUrl(e.target.value)} placeholder="https://example.com" required /><NumberInput label="Max Pages" value={crawlPages} onChange={v => setCrawlPages(Number(v)||10)} min={1} max={100} w={120} /></>;
+        return <><TextInput autoComplete="off" label="Starting URL" value={crawlUrl} onChange={e => setCrawlUrl(e.target.value)} placeholder="https://example.com" required /><NumberInput autoComplete="off" label="Max Pages" value={crawlPages} onChange={v => setCrawlPages(Number(v)||10)} min={1} max={100} w={120} /></>;
       case "extract":
-        return <><Textarea label="URLs (one per line)" value={extractUrls} onChange={e => setExtractUrls(e.target.value)} placeholder="https://example.com/page1" rows={3} required /><Textarea label="Extraction Prompt" value={extractPrompt} onChange={e => setExtractPrompt(e.target.value)} placeholder="Describe what data to extract..." rows={2} /></>;
+        return <><Textarea autoComplete="off" label="URLs (one per line)" value={extractUrls} onChange={e => setExtractUrls(e.target.value)} placeholder="https://example.com/page1" rows={3} required /><Textarea autoComplete="off" label="Extraction Prompt" value={extractPrompt} onChange={e => setExtractPrompt(e.target.value)} placeholder="Describe what data to extract..." rows={2} /></>;
       case "map":
-        return <TextInput label="URL" value={mapUrl} onChange={e => setMapUrl(e.target.value)} placeholder="https://example.com" required />;
+        return <TextInput autoComplete="off" label="URL" value={mapUrl} onChange={e => setMapUrl(e.target.value)} placeholder="https://example.com" required />;
     }
   };
 
@@ -133,12 +133,12 @@ export default function Playground() {
         ))}
       </Tabs>
       {error && (
-        <Alert icon={<IconAlertCircle size={18} />} color="red" variant="light" radius="lg">
+        <Alert icon={<IconAlertCircle size={18} />} color="red" variant="light" radius="lg" aria-live="polite">
           {error}
         </Alert>
       )}
       {response && (
-        <Card padding="lg" radius="lg" withBorder>
+        <Card padding="lg" radius="lg" withBorder aria-live="polite">
           <Group gap="xs" mb="sm">
             <ThemeIcon variant="gradient" gradient={{ from: "green", to: "teal", deg: 45 }} size="sm" radius="sm">
               <IconCheck size={14} />

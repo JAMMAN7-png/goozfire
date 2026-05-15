@@ -42,7 +42,6 @@ export default function Fusion() {
   const [responses, setResponses] = useState<Record<string, { content: string; time: number; tokens: number }>>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [hoveredModel, setHoveredModel] = useState<string | null>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
 
   // Load available models
@@ -128,6 +127,24 @@ export default function Fusion() {
 
   return (
     <Stack gap="lg">
+      <style>{`
+        .fusion-result-card {
+          transition: transform 0.2s;
+          display: flex;
+          flex-direction: column;
+        }
+        .fusion-result-card:hover {
+          transform: translateY(-2px);
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .fusion-result-card {
+            transition: none;
+          }
+          .fusion-result-card:hover {
+            transform: none;
+          }
+        }
+      `}</style>
       <Group justify="space-between">
         <Group>
           <ThemeIcon variant="gradient" gradient={{from:"orange",to:"red"}} size="xl" radius="md">
@@ -169,6 +186,7 @@ export default function Fusion() {
             minRows={1}
             maxRows={3}
             autosize
+            autoComplete="off"
           />
 
           <Textarea
@@ -180,6 +198,7 @@ export default function Fusion() {
             maxRows={6}
             autosize
             required
+            autoComplete="off"
             onKeyDown={(e) => {
               if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
                 e.preventDefault();
@@ -202,7 +221,7 @@ export default function Fusion() {
               Run Fusion ({selectedModels.length} models)
             </Button>
             {Object.keys(responses).length > 0 && (
-              <ActionIcon variant="light" color="red" onClick={() => setResponses({})}>
+              <ActionIcon variant="light" color="red" onClick={() => setResponses({})} aria-label="Clear responses">
                 <IconTrash size={16} />
               </ActionIcon>
             )}
@@ -233,16 +252,17 @@ export default function Fusion() {
             const provider = model.split("/")[0] || "";
 
             return (
-              <Paper key={model} p="md" radius="md" style={{ display: "flex", flexDirection: "column", transition: "transform 0.2s", transform: hoveredModel === model ? "translateY(-2px)" : undefined }} onMouseEnter={() => setHoveredModel(model)} onMouseLeave={() => setHoveredModel(null)}>
+              <Paper key={model} p="md" radius="md" className="fusion-result-card">
                 <Group justify="space-between" mb="sm">
-                  <Group gap="xs">
-                    <Badge size="lg" variant="light" color="indigo">
+                  <Group gap="xs" style={{ minWidth: 0 }}>
+                    <Badge size="lg" variant="light" color="indigo"
+                      style={{ maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {modelName}
                     </Badge>
                     <Text size="xs" c="dimmed">{provider}</Text>
                   </Group>
                   {resp.time > 0 && (
-                    <Badge size="sm" variant="light" color="gray">
+                    <Badge size="sm" variant="light" color="gray" style={{ flexShrink: 0 }}>
                       {resp.time}ms · {resp.tokens}tok
                     </Badge>
                   )}

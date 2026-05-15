@@ -48,78 +48,114 @@ export default function ApiKeys() {
   };
 
   return (
-    <Stack gap="lg">
-      <Group justify="space-between">
-        <div>
-          <Title order={2} style={{ background: "linear-gradient(135deg, #667eea, #764ba2)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>API Keys</Title>
-          <Text c="dimmed" size="sm">Manage your API keys for programmatic access</Text>
-        </div>
-        <Button leftSection={<IconPlus size={16} />} variant="gradient" gradient={{ from: "indigo", to: "cyan" }} onClick={open}>New Key</Button>
-      </Group>
+    <>
+      <style>{`
+.apiKeyCard {
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.apiKeyCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+}
+.tabularNums {
+  font-variant-numeric: tabular-nums;
+}
+.textTruncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: block;
+}
+.headingBalance {
+  text-wrap: balance;
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+      `}</style>
+      <Stack gap="lg">
+        <Group justify="space-between">
+          <div>
+            <Title order={2} className="headingBalance" style={{ background: "linear-gradient(135deg, #667eea, #764ba2)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>API Keys</Title>
+            <Text c="dimmed" size="sm" className="headingBalance">Manage your API keys for programmatic access</Text>
+          </div>
+          <Button leftSection={<IconPlus size={16} />} variant="gradient" gradient={{ from: "indigo", to: "cyan" }} onClick={open}>New Key</Button>
+        </Group>
 
-      {createdKey && (
-        <Alert icon={<IconKey size={16} />} color="yellow" title="API Key Created — Copy it now!" withCloseButton onClose={() => setCreatedKey(null)}>
-          <Text size="sm" mb="xs">You won't see this key again. Store it securely.</Text>
-          <Group>
-            <Code block style={{ flex: 1 }}>{createdKey}</Code>
-            <CopyButton value={createdKey}>
-              {({ copied, copy }) => (
-                <Button size="compact-sm" color={copied ? "teal" : "indigo"} onClick={copy}
-                  leftSection={copied ? <IconCheck size={14} /> : <IconCopy size={14} />}>{copied ? "Copied" : "Copy"}</Button>
-              )}
-            </CopyButton>
-          </Group>
-        </Alert>
-      )}
+        {createdKey && (
+          <Alert icon={<IconKey size={16} />} color="yellow" title="API Key Created — Copy it now!" withCloseButton onClose={() => setCreatedKey(null)}>
+            <Text size="sm" mb="xs">You won't see this key again. Store it securely.</Text>
+            <Group>
+              <Code block style={{ flex: 1 }}>{createdKey}</Code>
+              <CopyButton value={createdKey}>
+                {({ copied, copy }) => (
+                  <Button size="compact-sm" color={copied ? "teal" : "indigo"} onClick={copy}
+                    leftSection={copied ? <IconCheck size={14} /> : <IconCopy size={14} />}>{copied ? "Copied" : "Copy"}</Button>
+                )}
+              </CopyButton>
+            </Group>
+          </Alert>
+        )}
 
-      <Modal opened={opened} onClose={close} title="Create API Key" centered>
-        <Stack gap="md">
-          <TextInput label="Key Name" placeholder="e.g., Production API" value={newKeyName}
-            onChange={e => setNewKeyName(e.target.value)} data-autofocus
-            onKeyDown={e => e.key === "Enter" && handleCreate()} />
-          <Group justify="flex-end">
-            <Button variant="default" onClick={close}>Cancel</Button>
-            <Button onClick={handleCreate}>Create Key</Button>
-          </Group>
-        </Stack>
-      </Modal>
+        <Modal opened={opened} onClose={close} title="Create API Key" centered>
+          <Stack gap="md">
+            <TextInput label="Key Name" placeholder="e.g., Production API" value={newKeyName}
+              onChange={e => setNewKeyName(e.target.value)} data-autofocus
+              onKeyDown={e => e.key === "Enter" && handleCreate()} />
+            <Group justify="flex-end">
+              <Button variant="default" onClick={close}>Cancel</Button>
+              <Button onClick={handleCreate}>Create Key</Button>
+            </Group>
+          </Stack>
+        </Modal>
 
-      {loading ? <Text c="dimmed">Loading...</Text> : keys.length === 0 ? (
-        <Paper p="xl" ta="center" radius="md"><IconKey size={40} stroke={1} style={{ opacity: 0.3 }} /><Text c="dimmed" mt="sm">No API keys yet.</Text></Paper>
-      ) : (
-        <SimpleGrid cols={{ base: 1, sm: 2 }}>
-          {keys.map(key => (
-            <Card key={key.id} padding="lg" radius="lg"
-              style={{ transition: "transform 0.2s, box-shadow 0.2s" }}
-              onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 8px 24px rgba(0,0,0,0.3)"; }}
-              onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "none"; }}>
-              <Group justify="space-between" mb="sm">
-                <Group gap="sm">
-                  <ThemeIcon variant="gradient" gradient={{ from: "indigo", to: "cyan" }} size="lg" radius="xl">
-                    <IconKey size={16} />
-                  </ThemeIcon>
-                  <div>
-                    <Text fw={600} size="sm">{key.name}</Text>
-                    <Code>{key.key_prefix}••••{key.key_last_chars}</Code>
-                  </div>
+        {loading ? <Text c="dimmed">Loading dashboard…</Text> : keys.length === 0 ? (
+          <Paper p="xl" radius="md" withBorder>
+            <Stack align="center" gap="md" py="xl">
+              <ThemeIcon variant="light" color="gray" size="xl" radius="xl">
+                <IconKey size={24} stroke={1.5} />
+              </ThemeIcon>
+              <div style={{ textAlign: "center" }}>
+                <Text c="dimmed" size="lg" fw={500}>No API keys yet</Text>
+                <Text c="dimmed" size="sm" mt={4}>Create your first key to get started with programmatic access.</Text>
+              </div>
+            </Stack>
+          </Paper>
+        ) : (
+          <SimpleGrid cols={{ base: 1, sm: 2 }}>
+            {keys.map(key => (
+              <Card key={key.id} padding="lg" radius="lg" className="apiKeyCard">
+                <Group justify="space-between" mb="sm">
+                  <Group gap="sm" style={{ flex: 1, minWidth: 0, overflow: "hidden" }}>
+                    <ThemeIcon variant="gradient" gradient={{ from: "indigo", to: "cyan" }} size="lg" radius="xl">
+                      <IconKey size={16} />
+                    </ThemeIcon>
+                    <div style={{ overflow: "hidden", minWidth: 0 }}>
+                      <Text fw={600} size="sm" className="textTruncate">{key.name}</Text>
+                      <Code className="tabularNums">{key.key_prefix}••••{key.key_last_chars}</Code>
+                    </div>
+                  </Group>
+                  <Badge color={key.is_active ? "green" : "gray"} variant="light">
+                    {key.is_active ? "Active" : "Revoked"}
+                  </Badge>
                 </Group>
-                <Badge color={key.is_active ? "green" : "gray"} variant="light">
-                  {key.is_active ? "Active" : "Revoked"}
-                </Badge>
-              </Group>
-              <Group gap="xs">
-                <Text size="xs" c="dimmed">Created: {new Date(key.created_at).toLocaleDateString()}</Text>
-                {key.last_used_at && <Text size="xs" c="dimmed">· Used: {new Date(key.last_used_at).toLocaleDateString()}</Text>}
-              </Group>
-              {key.is_active && (
-                <Group justify="flex-end" mt="sm">
-                  <ActionIcon color="red" variant="light" onClick={() => handleDelete(key.id)}><IconTrash size={14} /></ActionIcon>
+                <Group gap="xs">
+                  <Text size="xs" c="dimmed" className="tabularNums">Created: {new Date(key.created_at).toLocaleDateString()}</Text>
+                  {key.last_used_at && <Text size="xs" c="dimmed" className="tabularNums">· Used: {new Date(key.last_used_at).toLocaleDateString()}</Text>}
                 </Group>
-              )}
-            </Card>
-          ))}
-        </SimpleGrid>
-      )}
-    </Stack>
+                {key.is_active && (
+                  <Group justify="flex-end" mt="sm">
+                    <ActionIcon color="red" variant="light" onClick={() => handleDelete(key.id)} aria-label="Revoke API key"><IconTrash size={14} /></ActionIcon>
+                  </Group>
+                )}
+              </Card>
+            ))}
+          </SimpleGrid>
+        )}
+      </Stack>
+    </>
   );
 }

@@ -1,23 +1,9 @@
 import { useEffect, useState } from "react";
 import {
-  Title,
-  Text,
-  Paper,
-  Group,
-  Badge,
-  Stack,
-  Select,
-  Skeleton,
-  Timeline,
-  ThemeIcon,
-  Card,
+  Title, Text, Paper, Group, Badge, Stack, Select, Skeleton, Timeline, ThemeIcon, Card,
 } from "@mantine/core";
 import {
-  IconListDetails,
-  IconLoader,
-  IconPlayerPlay,
-  IconCheck,
-  IconX,
+  IconListDetails, IconLoader, IconPlayerPlay, IconCheck, IconX,
 } from "@tabler/icons-react";
 
 interface Job {
@@ -52,6 +38,16 @@ const statusGradient: Record<string, string> = {
   failed: "linear-gradient(135deg, #ff6b6b, #fa5252)",
   queued: "linear-gradient(135deg, #868e96, #495057)",
 };
+
+const dateFormatter = new Intl.DateTimeFormat(undefined, {
+  year: "numeric", month: "short", day: "numeric",
+  hour: "2-digit", minute: "2-digit", second: "2-digit",
+});
+
+function formatDate(dateStr: string | null): string {
+  if (!dateStr) return "";
+  return dateFormatter.format(new Date(dateStr));
+}
 
 function JobTimeline({ job }: { job: Job }) {
   const getActive = (step: string) => {
@@ -110,7 +106,7 @@ function JobTimeline({ job }: { job: Job }) {
         title="Queued"
       >
         <Text size="xs" c="dimmed">
-          {new Date(job.created_at).toLocaleString()}
+          {formatDate(job.created_at)}
         </Text>
       </Timeline.Item>
       <Timeline.Item
@@ -122,7 +118,7 @@ function JobTimeline({ job }: { job: Job }) {
         title="Processing"
       >
         <Text size="xs" c="dimmed">
-          {job.started_at ? new Date(job.started_at).toLocaleString() : "Waiting..."}
+          {job.started_at ? formatDate(job.started_at) : "Waiting..."}
         </Text>
       </Timeline.Item>
       <Timeline.Item
@@ -144,7 +140,7 @@ function JobTimeline({ job }: { job: Job }) {
       >
         <Text size="xs" c="dimmed">
           {job.completed_at
-            ? new Date(job.completed_at).toLocaleString()
+            ? formatDate(job.completed_at)
             : job.status === "failed"
               ? "Error occurred"
               : "In progress..."}
@@ -160,14 +156,9 @@ function JobCard({ job }: { job: Job }) {
       padding="lg"
       radius="lg"
       withBorder
+      className="job-card"
       style={{
-        transition: "transform 200ms ease",
-      }}
-      onMouseEnter={(e) => {
-        (e.currentTarget as HTMLDivElement).style.transform = "translateY(-2px)";
-      }}
-      onMouseLeave={(e) => {
-        (e.currentTarget as HTMLDivElement).style.transform = "translateY(0)";
+        transition: "transform 0.2s, box-shadow 0.2s",
       }}
     >
       <Stack gap="md">
@@ -178,7 +169,7 @@ function JobCard({ job }: { job: Job }) {
               <Text fw={600} size="sm">
                 {job.type.charAt(0).toUpperCase() + job.type.slice(1)} Job
               </Text>
-              <Text size="xs" c="dimmed">
+              <Text size="xs" c="dimmed" style={{ fontVariantNumeric: "tabular-nums" }}>
                 #{job.id}
               </Text>
             </div>
@@ -204,7 +195,7 @@ function JobCard({ job }: { job: Job }) {
               <Text size="xs" c="dimmed">
                 Progress
               </Text>
-              <Text size="xs" fw={600}>
+              <Text size="xs" fw={600} style={{ fontVariantNumeric: "tabular-nums" }}>
                 {job.progress}%
               </Text>
             </Group>
@@ -218,6 +209,7 @@ function JobCard({ job }: { job: Job }) {
               }}
             >
               <div
+                className="progress-bar"
                 style={{
                   width: `${job.progress}%`,
                   height: "100%",
@@ -235,7 +227,7 @@ function JobCard({ job }: { job: Job }) {
             <Text size="xs" c="dimmed">
               Credits used
             </Text>
-            <Text size="sm" fw={500}>
+            <Text size="sm" fw={500} style={{ fontVariantNumeric: "tabular-nums" }}>
               {job.credits_used}
             </Text>
           </div>
@@ -244,7 +236,7 @@ function JobCard({ job }: { job: Job }) {
               Created
             </Text>
             <Text size="sm" fw={500}>
-              {new Date(job.created_at).toLocaleString()}
+              {formatDate(job.created_at)}
             </Text>
           </div>
         </Group>
@@ -290,7 +282,18 @@ export default function Jobs() {
   }, [filter]);
 
   return (
-    <Stack gap="lg">
+    <Stack gap="lg" aria-live="polite">
+      <style>{`
+        .job-card:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .job-card { transition: none; }
+          .job-card:hover { transform: none; box-shadow: none; }
+          .progress-bar { transition: none; }
+        }
+      `}</style>
       <Group justify="space-between">
         <div>
           <Title

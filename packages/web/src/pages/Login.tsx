@@ -22,7 +22,6 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [lifted, setLifted] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e?: React.FormEvent) => {
@@ -51,6 +50,9 @@ export default function Login() {
           animation: authCardMount 0.4s ease-out;
           transition: transform 0.2s ease;
         }
+        .auth-card:hover {
+          transform: translateY(-2px);
+        }
       `}</style>
       <Center mih="100vh" style={{ background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)" }}>
         <Card
@@ -58,48 +60,47 @@ export default function Login() {
           p="xl"
           radius="lg"
           className="auth-card"
-          style={(theme) => ({
+          style={{
             border: "2px solid",
             borderImage: "linear-gradient(135deg, #3b5bdb 0%, #22b8cf 100%) 1",
             background: "#1a1b1e",
-            transition: "transform 0.2s",
-            transform: lifted ? "translateY(-2px)" : "translateY(0)",
-          })}
-          onMouseEnter={() => setLifted(true)}
-          onMouseLeave={() => setLifted(false)}
+          }}
         >
-          <form onSubmit={handleSubmit}>
-            <Stack gap="md">
-              <Center>
-                <Box>
-                  <Center mb="xs">
-                    <ThemeIcon size="xl" radius="xl" variant="gradient" gradient={{ from: "orange", to: "red" }}>
-                      <IconFlame size={24} />
-                    </ThemeIcon>
-                  </Center>
-                  <Title
-                    order={2}
-                    ta="center"
-                    style={{
-                      background: "linear-gradient(135deg, #4dabf7 0%, #22b8cf 100%)",
-                      WebkitBackgroundClip: "text",
-                      WebkitTextFillColor: "transparent",
-                    }}
-                  >
-                    Goozfire
-                  </Title>
-                  <Text c="dimmed" size="sm" ta="center">
-                    Search API & MCP Gateway
-                  </Text>
-                </Box>
-              </Center>
+          <Card.Section inheritPadding py="md" style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+            <Center>
+              <Box>
+                <Center mb="xs">
+                  <ThemeIcon size="xl" radius="xl" variant="gradient" gradient={{ from: "orange", to: "red" }}>
+                    <IconFlame size={24} aria-label="Goozfire" />
+                  </ThemeIcon>
+                </Center>
+                <Title
+                  order={2}
+                  ta="center"
+                  style={{
+                    background: "linear-gradient(135deg, #4dabf7 0%, #22b8cf 100%)",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                  }}
+                >
+                  Goozfire
+                </Title>
+                <Text c="dimmed" size="sm" ta="center">
+                  Search API & MCP Gateway
+                </Text>
+              </Box>
+            </Center>
+          </Card.Section>
 
+          <form onSubmit={handleSubmit}>
+            <Stack gap="md" pt="md">
               {error && (
                 <Alert
                   icon={<IconAlertCircle size={16} />}
                   color="red"
                   variant="light"
                   style={{ border: "1px solid #fa5252" }}
+                  aria-live="polite"
                 >
                   {error}
                 </Alert>
@@ -112,6 +113,8 @@ export default function Login() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 autoFocus
+                name="email"
+                autoComplete="email"
               />
 
               <PasswordInput
@@ -121,6 +124,8 @@ export default function Login() {
                 onChange={(e) => setPassword(e.target.value)}
                 onKeyDown={e => e.key==='Enter' && handleSubmit(e as any)}
                 required
+                name="password"
+                autoComplete="current-password"
               />
 
               <Button
@@ -131,7 +136,7 @@ export default function Login() {
                 variant="gradient"
                 gradient={{ from: "indigo", to: "cyan" }}
               >
-                Sign in
+                {loading ? "Signing in\u2026" : "Sign in"}
               </Button>
 
               <Text ta="center" size="sm" c="dimmed">

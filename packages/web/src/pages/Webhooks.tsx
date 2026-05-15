@@ -12,6 +12,23 @@ interface WebhookItem {
   created_at: string; last_triggered_at: string | null; last_triggered_status: number | null;
 }
 
+const dateFormatter = new Intl.DateTimeFormat(undefined, {
+  year: "numeric", month: "short", day: "numeric",
+  hour: "2-digit", minute: "2-digit",
+});
+
+const dateOnlyFormatter = new Intl.DateTimeFormat(undefined, {
+  year: "numeric", month: "short", day: "numeric",
+});
+
+function formatDate(dateStr: string): string {
+  return dateOnlyFormatter.format(new Date(dateStr));
+}
+
+function formatDateTime(dateStr: string): string {
+  return dateFormatter.format(new Date(dateStr));
+}
+
 export default function Webhooks() {
   const [hooks, setHooks] = useState<WebhookItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -84,6 +101,19 @@ export default function Webhooks() {
 
   return (
     <Stack gap="lg">
+      <style>{`
+        .webhook-card {
+          transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .webhook-card:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .webhook-card { transition: none; }
+          .webhook-card:hover { transform: none; box-shadow: none; }
+        }
+      `}</style>
       <Title order={2} style={{ background: "linear-gradient(135deg, #667eea, #764ba2)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
         Webhooks
       </Title>
@@ -102,6 +132,7 @@ export default function Webhooks() {
         </Group>
         <Group gap="sm">
           <TextInput
+            autoComplete="off"
             placeholder="https://your-server.com/webhook/openrouter"
             value={orWebhook}
             onChange={e => setOrWebhook(e.target.value)}
@@ -125,16 +156,16 @@ export default function Webhooks() {
       </Group>
 
       {secretInfo && (
-        <Alert title="Webhook Created" color="yellow" withCloseButton onClose={() => setSecretInfo(null)}>
+        <Alert title="Webhook Created" color="yellow" withCloseButton onClose={() => setSecretInfo(null)} aria-live="polite">
           <Text size="sm">{secretInfo}</Text>
         </Alert>
       )}
 
       <Modal opened={opened} onClose={close} title="Add Webhook" centered>
         <Stack gap="md">
-          <TextInput label="Webhook URL" value={newUrl} onChange={e => setNewUrl(e.target.value)} placeholder="https://example.com/webhook" required
+          <TextInput label="Webhook URL" value={newUrl} onChange={e => setNewUrl(e.target.value)} placeholder="https://example.com/webhook" required autoComplete="off"
             onKeyDown={e => e.key === "Enter" && handleCreate()} />
-          <TextInput label="Events (comma-separated)" value={newEvents} onChange={e => setNewEvents(e.target.value)} placeholder="job.completed, job.failed" />
+          <TextInput label="Events (comma-separated)" value={newEvents} onChange={e => setNewEvents(e.target.value)} placeholder="job.completed, job.failed" autoComplete="off" />
           <Text size="xs" c="dimmed">Options: job.completed, job.failed, job.progress, crawl.completed</Text>
           <Group justify="flex-end">
             <Button variant="default" onClick={close}>Cancel</Button>
@@ -143,7 +174,9 @@ export default function Webhooks() {
         </Stack>
       </Modal>
 
-      {loading ? <Text c="dimmed">Loading...</Text> : hooks.length === 0 ? (
+      {loading ? (
+        <Text c="dimmed" aria-live="polite">Loading jobs\u2026</Text>
+      ) : hooks.length === 0 ? (
         <Paper p="xl" ta="center" radius="md">
           <IconLink size={40} stroke={1} style={{ opacity: 0.3 }} />
           <Text c="dimmed" mt="sm">No webhooks configured.</Text>
@@ -151,10 +184,7 @@ export default function Webhooks() {
       ) : (
         <Stack gap="sm">
           {hooks.map(hook => (
-            <Card key={hook.id} padding="lg" radius="lg" withBorder
-              style={{ transition: "transform 0.2s, box-shadow 0.2s" }}
-              onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 8px 24px rgba(0,0,0,0.3)"; }}
-              onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "none"; }}>
+            <Card key={hook.id} padding="lg" radius="lg" withBorder className="webhook-card">
               <Group justify="space-between" wrap="nowrap">
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <Group gap="xs" mb={4}>
@@ -165,14 +195,18 @@ export default function Webhooks() {
                   </Group>
                   <Group gap="xs">
                     {hook.events.map(e => <Badge key={e} variant="light" size="sm" color="indigo">{e}</Badge>)}
-                    <Text size="xs" c="dimmed">· {new Date(hook.created_at).toLocaleDateString()}</Text>
-                    {hook.last_triggered_at && <Text size="xs" c="dimmed">· Last: {new Date(hook.last_triggered_at).toLocaleString()} ({hook.last_triggered_status})</Text>}
+                    <Text size="xs" c="dimmed">· {formatDate(hook.created_at)}</Text>
+                    {hook.last_triggered_at && (
+                      <Text size="xs" c="dimmed" style={{ fontVariantNumeric: "tabular-nums" }}>
+                        · Last: {formatDateTime(hook.last_triggered_at)} ({hook.last_triggered_status})
+                      </Text>
+                    )}
                   </Group>
                 </div>
                 <Group gap="xs" wrap="nowrap">
                   <Switch checked={hook.is_active} onChange={() => handleToggle(hook)}
                     label={hook.is_active ? "Active" : "Paused"} size="sm" />
-                  <ActionIcon variant="light" color="red" onClick={() => handleDelete(hook.id)}>
+                  <ActionIcon variant="light" color="red" onClick={() => handleDelete(hook.id)} aria-label="Delete webhook">
                     <IconTrash size={14} />
                   </ActionIcon>
                 </Group>

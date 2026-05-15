@@ -31,7 +31,10 @@ export default function Chat() {
   }, []);
 
   useEffect(() => {
-    if (viewport.current) viewport.current.scrollTo({ top: viewport.current.scrollHeight, behavior: "smooth" });
+    if (viewport.current) {
+      const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+      viewport.current.scrollTo({ top: viewport.current.scrollHeight, behavior: mq.matches ? "auto" : "smooth" });
+    }
   }, [messages, responses]);
 
   const sendMessage = async () => {
@@ -81,6 +84,9 @@ export default function Chat() {
     setResponses({});
   };
 
+  const userMessages = messages.filter(m => m.role !== "system");
+  const hasResponses = Object.keys(responses).length > 0 || loading;
+
   return (
     <Stack gap="lg" h="calc(100vh - 120px)">
       <Group justify="space-between">
@@ -93,14 +99,20 @@ export default function Chat() {
         <Group>
           <MultiSelect data={modelOptions.slice(0, 30)} value={models} onChange={setModels}
             placeholder="Select models" w={300} maxValues={8} searchable clearable />
-          <ActionIcon variant="light" color="red" onClick={clearChat}><IconTrash size={16} /></ActionIcon>
+          <ActionIcon variant="light" color="red" onClick={clearChat} aria-label="Clear chat"><IconTrash size={16} /></ActionIcon>
         </Group>
       </Group>
 
       <Card padding={0} radius="lg" withBorder style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
         <ScrollArea p="md" style={{ flex: 1 }} viewportRef={viewport}>
-          <Stack gap="md" p="md">
-            {messages.filter(m => m.role !== "system").map((msg, i) => (
+          <Stack gap="md" p="md" aria-live="polite">
+            {userMessages.length === 0 && !hasResponses && (
+              <Stack gap="sm" align="center" py="xl">
+                <IconMessage size={48} stroke={1} style={{ opacity: 0.3 }} />
+                <Text c="dimmed" ta="center">No messages yet. Type a message below to start a conversation.</Text>
+              </Stack>
+            )}
+            {userMessages.map((msg, i) => (
               <Group key={i} gap="sm" justify={msg.role === "user" ? "flex-end" : "flex-start"} align="flex-end">
                 {msg.role === "assistant" && <Avatar size="sm" radius="xl" color="grape"><IconRobot size={16} /></Avatar>}
                 <Paper p="sm" radius="lg" style={{
@@ -126,13 +138,14 @@ export default function Chat() {
                 <Group key={model} gap="sm" align="flex-end">
                   <Avatar size="sm" radius="xl" color="teal"><IconRobot size={16} /></Avatar>
                   <Paper p="sm" radius="lg" style={{ maxWidth: "80%", background: "var(--mantine-color-dark-6)" }}>
-                    <Group gap="xs" mb={4}>
-                      <Badge size="sm" variant="gradient" gradient={{ from: "teal", to: "cyan" }}>
+                    <Group gap="xs" mb={4} style={{ minWidth: 0 }}>
+                      <Badge size="sm" variant="gradient" gradient={{ from: "teal", to: "cyan" }}
+                        style={{ maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                         {model?.split?.("/")?.pop() || ''}
                       </Badge>
                       {isStreaming && <Loader size="xs" />}
                     </Group>
-                    <Text size="sm" style={{ whiteSpace: "pre-wrap" }}>{resp || "Thinking..."}</Text>
+                    <Text size="sm" style={{ whiteSpace: "pre-wrap" }}>{resp || "Thinking\u2026"}</Text>
                   </Paper>
                 </Group>
               );
@@ -149,7 +162,7 @@ export default function Chat() {
             <Group gap="sm" align="flex-end">
               <Textarea value={input} onChange={e => setInput(e.target.value)}
                 placeholder="Type your message..." style={{ flex: 1 }} minRows={1} maxRows={4} autosize
-                disabled={loading}
+                disabled={loading} autoComplete="off"
                 onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }} />
               <Button type="submit" loading={loading} loaderProps={{ type: "dots" }}
                 variant="gradient" gradient={{ from: "indigo", to: "cyan" }}>

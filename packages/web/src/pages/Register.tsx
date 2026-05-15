@@ -23,7 +23,6 @@ export default function Register() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [hovered, setHovered] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -50,6 +49,10 @@ export default function Register() {
         }
         .auth-card {
           animation: authCardMount 0.4s ease-out;
+          transition: transform 0.2s ease;
+        }
+        .auth-card:hover {
+          transform: translateY(-2px);
         }
       `}</style>
       <Center mih="100vh" style={{ background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)" }}>
@@ -62,44 +65,43 @@ export default function Register() {
             border: "2px solid",
             borderImage: "linear-gradient(135deg, #3b5bdb 0%, #22b8cf 100%) 1",
             background: "#1a1b1e",
-            transition: "transform 0.2s",
-            transform: hovered ? "translateY(-2px)" : "translateY(0)",
           }}
-          onMouseEnter={() => setHovered(true)}
-          onMouseLeave={() => setHovered(false)}
         >
-          <form onSubmit={handleSubmit}>
-            <Stack gap="md">
-              <Center>
-                <Box>
-                  <Center mb="xs">
-                    <ThemeIcon size="xl" radius="xl" variant="gradient" gradient={{ from: "orange", to: "red" }}>
-                      <IconFlame size={24} />
-                    </ThemeIcon>
-                  </Center>
-                  <Title
-                    order={2}
-                    ta="center"
-                    style={{
-                      background: "linear-gradient(135deg, #4dabf7 0%, #22b8cf 100%)",
-                      WebkitBackgroundClip: "text",
-                      WebkitTextFillColor: "transparent",
-                    }}
-                  >
-                    Create Account
-                  </Title>
-                  <Text c="dimmed" size="sm" ta="center">
-                    Join Goozfire
-                  </Text>
-                </Box>
-              </Center>
+          <Card.Section inheritPadding py="md" style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+            <Center>
+              <Box>
+                <Center mb="xs">
+                  <ThemeIcon size="xl" radius="xl" variant="gradient" gradient={{ from: "orange", to: "red" }}>
+                    <IconFlame size={24} aria-label="Goozfire" />
+                  </ThemeIcon>
+                </Center>
+                <Title
+                  order={2}
+                  ta="center"
+                  style={{
+                    background: "linear-gradient(135deg, #4dabf7 0%, #22b8cf 100%)",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                  }}
+                >
+                  Create Account
+                </Title>
+                <Text c="dimmed" size="sm" ta="center">
+                  Join Goozfire
+                </Text>
+              </Box>
+            </Center>
+          </Card.Section>
 
+          <form onSubmit={handleSubmit}>
+            <Stack gap="md" pt="md">
               {error && (
                 <Alert
                   icon={<IconAlertCircle size={16} />}
                   color="red"
                   variant="light"
                   style={{ border: "1px solid #fa5252" }}
+                  aria-live="polite"
                 >
                   {error}
                 </Alert>
@@ -112,6 +114,8 @@ export default function Register() {
                 onChange={(e) => setName(e.target.value)}
                 required
                 autoFocus
+                name="name"
+                autoComplete="name"
               />
 
               <TextInput
@@ -120,6 +124,8 @@ export default function Register() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                name="email"
+                autoComplete="email"
               />
 
               <PasswordInput
@@ -130,6 +136,8 @@ export default function Register() {
                 onKeyDown={e => e.key==='Enter' && handleSubmit(e as any)}
                 required
                 minLength={6}
+                name="password"
+                autoComplete="new-password"
               />
 
               <Button
@@ -140,7 +148,7 @@ export default function Register() {
                 variant="gradient"
                 gradient={{ from: "indigo", to: "cyan" }}
               >
-                Create account
+                {loading ? "Creating account\u2026" : "Create account"}
               </Button>
 
               <Text ta="center" size="sm" c="dimmed">
