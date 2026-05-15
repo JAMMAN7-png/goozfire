@@ -16,6 +16,7 @@ import { batchRoutes } from "./routes/batch";
 import { jobsRoutes } from "./routes/jobs";
 import { webhooksRoutes } from "./routes/webhooks";
 import { chatRoutes } from "./routes/chat";
+import { gatewayRoutes } from "./routes/gateway";
 import { rateLimit } from "./middleware/rate-limit";
 
 const app = new Hono();
@@ -62,7 +63,7 @@ app.route("/api/v1", batchRoutes);
 app.route("/api/v1", jobsRoutes);
 app.route("/api/v1", webhooksRoutes);
 app.route("/api/v1", chatRoutes);
-
+app.route("/api/v1", gatewayRoutes);
 if (WEB_DIST) {
   app.get("*", async (c) => {
     const reqPath = new URL(c.req.url).pathname;

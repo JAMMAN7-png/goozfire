@@ -6,6 +6,7 @@ import {
   Stack,
   Group,
   Textarea,
+  ThemeIcon,
   Button,
   MultiSelect,
   Badge,
@@ -41,6 +42,7 @@ export default function Fusion() {
   const [responses, setResponses] = useState<Record<string, { content: string; time: number; tokens: number }>>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hoveredModel, setHoveredModel] = useState<string | null>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
 
   // Load available models
@@ -117,12 +119,17 @@ export default function Fusion() {
   return (
     <Stack gap="lg">
       <Group justify="space-between">
-        <div>
-          <Title order={2}>Fusion</Title>
-          <Text c="dimmed" size="sm">
-            Send the same prompt to up to 8 models at once — compare responses side by side
-          </Text>
-        </div>
+        <Group>
+          <ThemeIcon variant="gradient" gradient={{from:"orange",to:"red"}} size="xl" radius="md">
+            <IconFlame size={24} />
+          </ThemeIcon>
+          <div>
+            <Title order={2}>Fusion</Title>
+            <Text c="dimmed" size="sm">
+              Send the same prompt to up to 8 models at once — compare responses side by side
+            </Text>
+          </div>
+        </Group>
         <Badge size="lg" variant="light" color="orange">
           <Group gap={4}>
             <IconFlame size={14} />
@@ -131,8 +138,8 @@ export default function Fusion() {
         </Badge>
       </Group>
 
-      <Paper p="md" radius="md">
-        <Stack gap="md">
+      <Paper p="md" radius="md" style={{ background: 'linear-gradient(135deg, var(--mantine-color-orange-8) 0%, var(--mantine-color-red-9) 100%)' }}>
+        <form onSubmit={(e) => { e.preventDefault(); runFusion(); }} style={{ display: "contents" }}>
           <MultiSelect
             label="Models"
             data={modelOptions.slice(0, 40)}
@@ -163,6 +170,12 @@ export default function Fusion() {
             maxRows={6}
             autosize
             required
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                e.preventDefault();
+                runFusion();
+              }
+            }}
           />
 
           <Group>
@@ -173,6 +186,8 @@ export default function Fusion() {
               leftSection={<IconSend size={16} />}
               disabled={!prompt.trim() || selectedModels.length === 0}
               size="lg"
+              variant="gradient"
+              gradient={{from:"orange",to:"red"}}
             >
               Run Fusion ({selectedModels.length} models)
             </Button>
@@ -182,7 +197,7 @@ export default function Fusion() {
               </ActionIcon>
             )}
           </Group>
-        </Stack>
+        </form>
       </Paper>
 
       {error && (
@@ -208,7 +223,7 @@ export default function Fusion() {
             const provider = model.split("/")[0] || "";
 
             return (
-              <Paper key={model} p="md" radius="md" style={{ display: "flex", flexDirection: "column" }}>
+              <Paper key={model} p="md" radius="md" style={{ display: "flex", flexDirection: "column", transition: "transform 0.2s", transform: hoveredModel === model ? "translateY(-2px)" : undefined }} onMouseEnter={() => setHoveredModel(model)} onMouseLeave={() => setHoveredModel(null)}>
                 <Group justify="space-between" mb="sm">
                   <Group gap="xs">
                     <Badge size="lg" variant="light" color="indigo">

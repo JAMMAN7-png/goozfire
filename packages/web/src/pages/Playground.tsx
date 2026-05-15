@@ -1,29 +1,20 @@
 import { useState } from "react";
-import {
-  Title,
-  Text,
-  Paper,
-  Stack,
-  TextInput,
-  Textarea,
-  NumberInput,
-  Button,
-  Tabs,
-  Code,
-  Group,
-  Badge,
-} from "@mantine/core";
-import { IconSearch, IconFileText, IconWorld, IconPuzzle, IconMap } from "@tabler/icons-react";
+import { Title, Text, Paper, Stack, TextInput, Textarea, NumberInput, Button, Tabs, Code, Group, Badge, ThemeIcon, Alert, Card } from "@mantine/core";
+import { IconSearch, IconFileText, IconWorld, IconPuzzle, IconMap, IconPlayerPlay, IconAlertCircle, IconCheck } from "@tabler/icons-react";
 import { tools } from "../api/client";
 
+const GRADIENT = { from: "indigo", to: "cyan", deg: 45 };
+
+const tabGradients: Record<string, { from: string; to: string; deg: number }> = {
+  search: { from: "indigo", to: "cyan", deg: 45 },
+  scrape: { from: "teal", to: "green", deg: 45 },
+  crawl: { from: "grape", to: "pink", deg: 45 },
+  extract: { from: "indigo", to: "cyan", deg: 45 },
+  map: { from: "teal", to: "green", deg: 45 },
+};
+
 type ToolName = "search" | "scrape" | "crawl" | "extract" | "map";
-
-interface TabConfig {
-  name: ToolName;
-  label: string;
-  icon: React.ElementType;
-}
-
+interface TabConfig { name: ToolName; label: string; icon: React.ElementType; }
 const tabs: TabConfig[] = [
   { name: "search", label: "Search", icon: IconSearch },
   { name: "scrape", label: "Scrape", icon: IconFileText },
@@ -37,8 +28,6 @@ export default function Playground() {
   const [loading, setLoading] = useState(false);
   const [response, setResponse] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-
-  // Form state
   const [searchQuery, setSearchQuery] = useState("");
   const [searchLimit, setSearchLimit] = useState(5);
   const [scrapeUrl, setScrapeUrl] = useState("");
@@ -49,125 +38,116 @@ export default function Playground() {
   const [mapUrl, setMapUrl] = useState("");
 
   const execute = async () => {
-    setLoading(true);
-    setResponse(null);
-    setError(null);
-
+    setLoading(true); setResponse(null); setError(null);
     try {
-      let result: any;
-      const tab = activeTab as ToolName;
-
+      let result: any; const tab = activeTab as ToolName;
       switch (tab) {
         case "search":
           if (!searchQuery.trim()) throw new Error("Query is required");
-          result = await tools.search(searchQuery, searchLimit);
-          break;
+          result = await tools.search(searchQuery, searchLimit); break;
         case "scrape":
           if (!scrapeUrl.trim()) throw new Error("URL is required");
-          result = await tools.scrape(scrapeUrl);
-          break;
+          result = await tools.scrape(scrapeUrl); break;
         case "crawl":
           if (!crawlUrl.trim()) throw new Error("URL is required");
-          result = await tools.crawl(crawlUrl, crawlPages);
-          break;
+          result = await tools.crawl(crawlUrl, crawlPages); break;
         case "extract":
           if (!extractUrls.trim()) throw new Error("At least one URL is required");
-          const urls = extractUrls.split("\n").map((s) => s.trim()).filter(Boolean);
-          result = await tools.extract(urls, extractPrompt);
-          break;
+          const urls = extractUrls.split("\n").map(s => s.trim()).filter(Boolean);
+          result = await tools.extract(urls, extractPrompt); break;
         case "map":
           if (!mapUrl.trim()) throw new Error("URL is required");
-          result = await tools.map(mapUrl);
-          break;
+          result = await tools.map(mapUrl); break;
       }
-
       setResponse(JSON.stringify(result, null, 2));
-    } catch (err: any) {
-      setError(err.message || "Request failed");
-    } finally {
-      setLoading(false);
-    }
+    } catch (err: any) { setError(err.message || "Request failed"); }
+    finally { setLoading(false); }
   };
 
   const renderForm = () => {
     switch (activeTab) {
       case "search":
-        return (
-          <>
-            <TextInput label="Query" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Natural language search query..." required />
-            <NumberInput label="Limit" value={searchLimit} onChange={(v) => setSearchLimit(Number(v) || 5)} min={1} max={20} w={120} />
-          </>
-        );
+        return <><TextInput label="Query" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Natural language search query..." required /><NumberInput label="Limit" value={searchLimit} onChange={v => setSearchLimit(Number(v)||5)} min={1} max={20} w={120} /></>;
       case "scrape":
-        return <TextInput label="URL" value={scrapeUrl} onChange={(e) => setScrapeUrl(e.target.value)} placeholder="https://example.com" required />;
+        return <TextInput label="URL" value={scrapeUrl} onChange={e => setScrapeUrl(e.target.value)} placeholder="https://example.com" required />;
       case "crawl":
-        return (
-          <>
-            <TextInput label="Starting URL" value={crawlUrl} onChange={(e) => setCrawlUrl(e.target.value)} placeholder="https://example.com" required />
-            <NumberInput label="Max Pages" value={crawlPages} onChange={(v) => setCrawlPages(Number(v) || 10)} min={1} max={100} w={120} />
-          </>
-        );
+        return <><TextInput label="Starting URL" value={crawlUrl} onChange={e => setCrawlUrl(e.target.value)} placeholder="https://example.com" required /><NumberInput label="Max Pages" value={crawlPages} onChange={v => setCrawlPages(Number(v)||10)} min={1} max={100} w={120} /></>;
       case "extract":
-        return (
-          <>
-            <Textarea label="URLs (one per line)" value={extractUrls} onChange={(e) => setExtractUrls(e.target.value)} placeholder="https://example.com/page1" rows={3} required />
-            <Textarea label="Extraction Prompt" value={extractPrompt} onChange={(e) => setExtractPrompt(e.target.value)} placeholder="Describe what data to extract..." rows={2} />
-          </>
-        );
+        return <><Textarea label="URLs (one per line)" value={extractUrls} onChange={e => setExtractUrls(e.target.value)} placeholder="https://example.com/page1" rows={3} required /><Textarea label="Extraction Prompt" value={extractPrompt} onChange={e => setExtractPrompt(e.target.value)} placeholder="Describe what data to extract..." rows={2} /></>;
       case "map":
-        return <TextInput label="URL" value={mapUrl} onChange={(e) => setMapUrl(e.target.value)} placeholder="https://example.com" required />;
+        return <TextInput label="URL" value={mapUrl} onChange={e => setMapUrl(e.target.value)} placeholder="https://example.com" required />;
     }
   };
+
+  const currentGradient = tabGradients[activeTab] ?? GRADIENT;
+  const ActiveIcon = tabs.find(t => t.name === activeTab)?.icon ?? IconPlayerPlay;
 
   return (
     <Stack gap="lg">
       <div>
-        <Title order={2}>Playground</Title>
+        <Title order={2} style={{ background: "linear-gradient(135deg, #667eea, #764ba2)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Playground</Title>
         <Text c="dimmed" size="sm">Test the API endpoints interactively</Text>
       </div>
-
-      <Tabs value={activeTab} onChange={(v) => setActiveTab(v || "search")}>
-        <Tabs.List mb="md">
-          {tabs.map((tab) => (
-            <Tabs.Tab key={tab.name} value={tab.name} leftSection={<tab.icon size={16} />}>
-              {tab.label}
-            </Tabs.Tab>
-          ))}
-        </Tabs.List>
-
-        {tabs.map((tab) => (
+      <Tabs value={activeTab} onChange={v => setActiveTab(v || "search")} variant="pills">
+        <Tabs.List mb="md">{tabs.map(tab => (
+          <Tabs.Tab
+            key={tab.name}
+            value={tab.name}
+            leftSection={<tab.icon size={16} />}
+            style={(theme) => ({
+              background: activeTab === tab.name
+                ? `linear-gradient(${tabGradients[tab.name]?.deg ?? 45}deg, ${theme.colors[tabGradients[tab.name]?.from ?? 'indigo'][6]}, ${theme.colors[tabGradients[tab.name]?.to ?? 'cyan'][6]})`
+                : undefined,
+              color: activeTab === tab.name ? '#fff' : undefined,
+            })}
+          >
+            {tab.label}
+          </Tabs.Tab>
+        ))}</Tabs.List>
+        {tabs.map(tab => (
           <Tabs.Panel key={tab.name} value={tab.name}>
-            <Paper p="md" radius="md" mb="md">
-              <Stack gap="md">
-                {tab.name === activeTab && renderForm()}
-                <Button onClick={execute} loading={loading} loaderProps={{ type: "dots" }} leftSection={<tab.icon size={16} />}>
-                  Execute
-                </Button>
-              </Stack>
-            </Paper>
+            <form onSubmit={e => { e.preventDefault(); execute(); }}>
+              <Card padding="lg" radius="lg" withBorder mb="md">
+                <Stack gap="md">
+                  <Group gap="sm">
+                    <ThemeIcon variant="gradient" gradient={tabGradients[tab.name] ?? GRADIENT} size="lg" radius="md">
+                      <tab.icon size={20} />
+                    </ThemeIcon>
+                    <Text fw={600} size="lg">{tab.label}</Text>
+                  </Group>
+                  {tab.name === activeTab && renderForm()}
+                  <Button
+                    type="submit"
+                    loading={loading}
+                    loaderProps={{ type: "dots" }}
+                    leftSection={<tab.icon size={16} />}
+                    variant="gradient"
+                    gradient={tabGradients[tab.name] ?? GRADIENT}
+                  >
+                    Execute
+                  </Button>
+                </Stack>
+              </Card>
+            </form>
           </Tabs.Panel>
         ))}
       </Tabs>
-
       {error && (
-        <Paper p="md" radius="md" bg="red" c="white">
-          <Group gap="xs">
-            <Badge color="red" variant="filled" size="sm">Error</Badge>
-            <Text size="sm">{error}</Text>
-          </Group>
-        </Paper>
+        <Alert icon={<IconAlertCircle size={18} />} color="red" variant="light" radius="lg">
+          {error}
+        </Alert>
       )}
-
       {response && (
-        <Paper p="md" radius="md" bg="dark">
+        <Card padding="lg" radius="lg" withBorder>
           <Group gap="xs" mb="sm">
+            <ThemeIcon variant="gradient" gradient={{ from: "green", to: "teal", deg: 45 }} size="sm" radius="sm">
+              <IconCheck size={14} />
+            </ThemeIcon>
             <Badge color="green" variant="filled" size="sm">Response</Badge>
             <Text size="xs" c="dimmed">JSON</Text>
           </Group>
-          <Code block style={{ background: "transparent", color: "#e0e0e0" }}>
-            {response}
-          </Code>
-        </Paper>
+          <Code block style={{ background: "transparent", color: "#e0e0e0" }}>{response}</Code>
+        </Card>
       )}
     </Stack>
   );
