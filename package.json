@@ -1,0 +1,33 @@
+{
+  "name": "goozfire",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/shared",
+    "packages/api",
+    "packages/mcp",
+    "packages/web"
+  ],
+  "scripts": {
+    "dev": "concurrently \"bun run dev:api\" \"bun run dev:mcp\" \"bun run dev:web\"",
+    "dev:api": "bun run --cwd packages/api dev",
+    "dev:mcp": "bun run --cwd packages/mcp dev",
+    "dev:web": "bun run --cwd packages/web dev",
+    "build": "bun run build:shared && bun run build:api && bun run build:mcp && bun run build:web",
+    "build:shared": "bun run --cwd packages/shared build",
+    "build:api": "bun run --cwd packages/api build",
+    "build:mcp": "bun run --cwd packages/mcp build",
+    "build:web": "bun run --cwd packages/web build",
+    "start": "bun run --cwd packages/api start",
+    "lint": "biome check packages/*/src",
+    "format": "biome format --write packages/*/src",
+    "db:migrate": "bun run --cwd packages/api db:migrate"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "concurrently": "^9.1.0",
+    "@biomejs/biome": "^1.9.0",
+    "@types/bun": "latest"
+  }
+}
