@@ -10,7 +10,7 @@ COPY packages/web/package.json packages/web/
 RUN bun install --frozen-lockfile
 
 # Copy source and config
-COPY tsconfig.json postcss.config.cjs ./
+COPY tsconfig.json ./
 COPY packages/shared ./packages/shared
 COPY packages/api ./packages/api
 COPY packages/web ./packages/web
